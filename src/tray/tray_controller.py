@@ -150,7 +150,10 @@ class TrayController:
         if self._tray is not None:
             self._tray.setToolTip(f"Tomato Clock · {state.time_str}")
             if state.running:
-                self._tray.setIcon(self._build_tray_icon_with_time(state.time_str))
+                if sys.platform == "win32":
+                    self._tray.setIcon(self._tray_base_icon)
+                else:
+                    self._tray.setIcon(self._build_tray_icon_with_time(state.time_str))
             else:
                 self._tray.setIcon(self._tray_base_icon)
 

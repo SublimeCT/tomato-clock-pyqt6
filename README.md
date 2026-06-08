@@ -43,6 +43,7 @@ uv run pyinstaller \
   --windowed \
   --clean \
   --noconfirm \
+  --add-data "pyproject.toml:." \
   --icon icon.icns \
   src/main.py
 
@@ -52,6 +53,7 @@ uv run pyinstaller \
   --windowed \
   --clean \
   --noconfirm \
+  --add-data "pyproject.toml;." \
   --icon icon.ico \
   src/main.py
 ```

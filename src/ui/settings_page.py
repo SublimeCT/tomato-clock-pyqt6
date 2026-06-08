@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from PyQt6.QtCore import QUrl, Qt
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
@@ -32,6 +34,7 @@ class SettingsPage(QWidget):
         self._settings = settings
         self.setObjectName("SettingsPage")
 
+        app_version = self._read_project_version()
         self.setStyleSheet(
             "QGroupBox { border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; background: rgba(255,255,255,0.70); margin-top: 8px; }"
             "QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: rgba(0,0,0,0.65); }"
@@ -56,6 +59,9 @@ class SettingsPage(QWidget):
 
         durations_group = QGroupBox("时长", self)
         durations_form = QFormLayout(durations_group)
+        durations_form.setContentsMargins(14, 14, 14, 14)
+        durations_form.setHorizontalSpacing(12)
+        durations_form.setVerticalSpacing(10)
 
         self.focus_spin = QSpinBox(self)
         self.focus_spin.setRange(1, 180)
@@ -85,10 +91,10 @@ class SettingsPage(QWidget):
         self.long_break_every_spin.valueChanged.connect(self._on_long_break_every_changed)
         self.long_break_every_spin.setFixedWidth(160)
 
-        durations_form.addRow("默认专注时长", self.focus_spin)
-        durations_form.addRow("短休息时长", self.short_break_spin)
-        durations_form.addRow("长休息时长", self.long_break_spin)
-        durations_form.addRow("长休息所需次数", self.long_break_every_spin)
+        durations_form.addRow("默认专注时长", self._right_align_field(self.focus_spin, parent=durations_group))
+        durations_form.addRow("短休息时长", self._right_align_field(self.short_break_spin, parent=durations_group))
+        durations_form.addRow("长休息时长", self._right_align_field(self.long_break_spin, parent=durations_group))
+        durations_form.addRow("长休息所需次数", self._right_align_field(self.long_break_every_spin, parent=durations_group))
 
         focus_type_group = QGroupBox("专注类型", self)
         focus_type_layout = QVBoxLayout(focus_type_group)
@@ -128,7 +134,7 @@ class SettingsPage(QWidget):
         app_icon_label.setStyleSheet("background: transparent;")
         app_icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         about_layout.addWidget(app_icon_label, 0, Qt.AlignmentFlag.AlignHCenter)
-        title_label = QLabel("Tomato Clock (PyQt6)", about_group)
+        title_label = QLabel(f"番茄专注(v{app_version})", about_group)
         title_label.setStyleSheet("font-size: 16px; font-weight: 700; color: rgba(0,0,0,0.86);")
         about_layout.addWidget(title_label, 0, Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(QLabel("状态栏番茄钟 / 专注 / 统计", about_group), 0, Qt.AlignmentFlag.AlignHCenter)
@@ -145,8 +151,53 @@ class SettingsPage(QWidget):
         root.addWidget(about_group)
         root.addStretch(1)
 
+    def _right_align_field(self, field: QWidget, *, parent: QWidget) -> QWidget:
+        wrap = QWidget(parent)
+        row = QHBoxLayout(wrap)
+        row.setContentsMargins(0, 0, 0, 0)
+        row.setSpacing(0)
+        row.addStretch(1)
+        row.addWidget(field, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        return wrap
+
     def focus_durations(self) -> None:
         self.focus_spin.setFocus()
+
+    def _read_project_version(self) -> str:
+        try:
+            import tomllib
+        except Exception:
+            return "0.0.0"
+        try:
+            from pathlib import Path
+
+            if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+                pyproject_path = Path(getattr(sys, "_MEIPASS")) / "pyproject.toml"
+            else:
+                pyproject_path = Path(__file__).resolve().parents[2] / "pyproject.toml"
+
+            if pyproject_path.exists():
+                raw = pyproject_path.read_bytes()
+                data = tomllib.loads(raw.decode("utf-8"))
+                version = data.get("project", {}).get("version", None)
+                if isinstance(version, str) and version.strip():
+                    return version.strip()
+        except Exception:
+            pass
+
+        try:
+            from importlib.metadata import PackageNotFoundError, version
+
+            for dist_name in ("tomato-clock-pyqt6", "tomato_clock_pyqt6"):
+                try:
+                    v = version(dist_name)
+                    if isinstance(v, str) and v.strip():
+                        return v.strip()
+                except PackageNotFoundError:
+                    continue
+        except Exception:
+            pass
+        return "0.0.0"
 
     def open_focus_type_manager(self) -> None:
         dialog = FocusTypeDialog(settings=self._settings, current_type=self._settings.default_focus_type())

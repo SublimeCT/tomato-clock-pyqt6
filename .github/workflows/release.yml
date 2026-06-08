@@ -22,7 +22,7 @@ jobs:
             artifact_path: dist/TomatoClock.app
             output_name: TomatoClock-macOS.zip
             command: |
-              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --icon icon.icns src/main.py
+              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --add-data "pyproject.toml:." --icon icon.icns src/main.py
               # macOS 的 .app 实际是个文件夹，必须压缩成 .zip 才能上载到 Release
               zip -r TomatoClock-macOS.zip dist/TomatoClock.app
 
@@ -34,7 +34,7 @@ jobs:
             command: |
               # Windows 下没有 .icns 图标，通常使用 .ico。如果没有 icon.ico，PyInstaller 会自动忽略或报错。
               # 这里默认兼容你的配置，若 Windows 下没有专门的 ico，可把 --icon 去掉或替换
-              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --icon icon.ico src/main.py
+              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --add-data "pyproject.toml;." --icon icon.ico src/main.py
               powershell Compress-Archive -Path dist/TomatoClock -DestinationPath TomatoClock-Windows.zip
 
           # Linux 平台配置
@@ -44,7 +44,7 @@ jobs:
             output_name: TomatoClock-Linux.tar.gz
             command: |
               # Linux 下打包通常是无窗口/依赖系统的，直接打包成二进制文件
-              uv run pyinstaller --name TomatoClock --clean --noconfirm src/main.py
+              uv run pyinstaller --name TomatoClock --clean --noconfirm --add-data "pyproject.toml:." src/main.py
               tar -czvf TomatoClock-Linux.tar.gz dist/TomatoClock
 
     steps:
