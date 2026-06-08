@@ -8,6 +8,38 @@
 | 设置 | ![](./docs/settings_tab.png) | |
 | 状态栏(MacOS 倒计时) | ![](./docs/tray_panel.png) | |
 
+## 安装
+可从 [github release](https://github.com/SublimeCT/tomato-clock-pyqt6/releases) 页面下载对应的安装包进行安装, 或自行 [打包](#打包)
+
+### Windows
+在 `zip` 格式的压缩包内, 直接运行 `TomatoClock.exe` 文件即可
+
+### MacOS
+在 `zip` 格式的压缩包内, 直接运行 `TomatoClock.app` 文件即可
+
+### Linux
+对于 `Ubuntu 22.04` 或更高版本, 通常执行 `TomatoClock` 文件即可, 目前并没有制作启动器文件, 以下是可能会遇到的报错:
+
+#### 缺少 qt 依赖库
+```bash
+ ~/Downloads/dist/TomatoClock/TomatoClock 
+
+qt.qpa.plugin: From 6.5.0, xcb-cursor0 or libxcb-cursor0 is needed to load the Qt xcb platform plugin.
+qt.qpa.plugin: Could not load the Qt platform plugin "xcb" in "" even though it was found.
+This application failed to start because no Qt platform plugin could be initialized. Reinstalling the application may fix this problem.
+
+Available platform plugins are: wayland-brcm, wayland-egl, wayland, xcb, vnc, eglfs, minimal, minimalegl, offscreen, vkkhrdisplay, linuxfb.
+
+Aborted
+```
+
+直接更新并安装缺少的依赖, 例如此处是 `libxcb-cursor0`:
+```bash
+sudo apt-add-repository universe
+sudo apt update
+sudo apt install -y libxcb-cursor0
+```
+
 
 ## 技术栈
 - [pyqt6](https://www.riverbankcomputing.com/static/Docs/PyQt6/): `qt` 的 `python` 绑定库
