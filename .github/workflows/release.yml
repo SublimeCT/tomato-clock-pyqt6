@@ -38,7 +38,7 @@ jobs:
               powershell Compress-Archive -Path dist/TomatoClock -DestinationPath TomatoClock-Windows.zip
 
           # Linux 平台配置
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             platform: linux
             artifact_path: dist/TomatoClock
             output_name: TomatoClock-Linux.tar.gz
