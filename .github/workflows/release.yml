@@ -22,9 +22,9 @@ jobs:
             artifact_path: dist/TomatoClock.app
             output_name: TomatoClock-macOS.zip
             command: |
-              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --add-data "pyproject.toml:." --icon icon.icns src/main.py
-              # macOS 的 .app 实际是个文件夹，必须压缩成 .zip 才能上载到 Release
-              zip -r TomatoClock-macOS.zip dist/TomatoClock.app
+              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --strip --optimize 2 --add-data "pyproject.toml:." --icon icon.icns src/main.py
+              # macOS 的 .app 建议用 ditto 打包，兼容资源分叉且压缩率更好
+              ditto -c -k --sequesterRsrc --keepParent dist/TomatoClock.app TomatoClock-macOS.zip
 
           # Windows 平台配置
           - os: windows-latest
