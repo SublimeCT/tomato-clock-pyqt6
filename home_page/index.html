@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>番茄专注 · TomatoClock</title>
+    <meta name="description" content="番茄专注（TomatoClock）是一款基于 PyQt6 的跨平台桌面番茄钟：面向 Windows / macOS / Linux，把开始—保持—复盘做成低摩擦流程；用统计（日历/年度）看见节奏，用状态栏/托盘把进度留在视线边缘，减少切换与打断。" />
+    <meta property="og:title" content="番茄专注 · TomatoClock" />
+    <meta property="og:description" content="基于 PyQt6 的跨平台桌面专注系统：番茄计时、统计（日历/年度）、设置与状态栏/托盘倒计时，支持 Windows / macOS / Linux（以 Releases 构建为准）。" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" />
+    <link rel="icon" href="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" />
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <style>
+      :root{--bg0:#020617;--bg1:#070b1a;--card:rgba(255,255,255,.06);--line:rgba(255,255,255,.12);--txt:rgba(255,255,255,.92);--mut:rgba(255,255,255,.72);--mut2:rgba(255,255,255,.54);--pri:#3b82f6;--cta:#ea580c;--ring:rgba(59,130,246,.75);--sh:0 30px 110px rgba(0,0,0,.55);--r:22px;--r2:16px;--max:1160px;--px:clamp(18px,3.2vw,34px);--ease:cubic-bezier(.16,1,.3,1);--gap:clamp(14px,1.8vw,22px);--gap2:clamp(18px,2.6vw,30px)}
+      *{box-sizing:border-box}html,body{height:100%}html{scroll-behavior:smooth}body{margin:0;color:var(--txt);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",Arial,sans-serif;line-height:1.65;background:linear-gradient(180deg,var(--bg0),var(--bg1))}
+      a{color:inherit;text-decoration:none}img{display:block;max-width:100%}p{margin:0}
+      .container{width:min(var(--max),calc(100% - 2*var(--px)));margin:0 auto}
+      .skip{position:absolute;left:-9999px;top:10px;z-index:1000;padding:10px 12px;border-radius:999px;background:rgba(0,0,0,.72);border:1px solid var(--line)}.skip:focus{left:12px}
+      :focus-visible{outline:3px solid var(--ring);outline-offset:3px;border-radius:14px}
+      .bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+      .blob{position:absolute;filter:blur(34px);opacity:.62;transform:translate3d(0,0,0)}
+      .b1{width:min(740px,88vw);height:min(740px,88vw);left:-14%;top:-24%;background:radial-gradient(circle at 30% 30%,rgba(59,130,246,.62),transparent 62%)}
+      .b2{width:min(780px,92vw);height:min(780px,92vw);right:-18%;top:-12%;background:radial-gradient(circle at 40% 40%,rgba(168,85,247,.56),transparent 62%)}
+      .b3{width:min(920px,98vw);height:min(920px,98vw);left:6%;bottom:-36%;background:radial-gradient(circle at 50% 50%,rgba(34,197,94,.42),transparent 65%)}
+      @keyframes drift1{0%{transform:translate(-2%,0) scale(1)}50%{transform:translate(6%,8%) scale(1.06)}100%{transform:translate(-2%,0) scale(1)}}
+      @keyframes drift2{0%{transform:translate(0,0) scale(1.02)}50%{transform:translate(-8%,10%) scale(1.08)}100%{transform:translate(0,0) scale(1.02)}}
+      @keyframes drift3{0%{transform:translate(0,0) scale(1)}50%{transform:translate(10%,-6%) scale(1.05)}100%{transform:translate(0,0) scale(1)}}
+      .b1{animation:drift1 14s var(--ease) infinite}.b2{animation:drift2 16s var(--ease) infinite}.b3{animation:drift3 18s var(--ease) infinite}
+      header{position:sticky;top:0;z-index:50;background:linear-gradient(180deg,rgba(2,6,23,.82),rgba(2,6,23,.38));backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid rgba(255,255,255,.08)}
+      .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0}
+      .brand{display:flex;align-items:center;gap:14px;min-width:0}
+      .brand img{width:44px;height:44px;border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55)}
+      .brand strong{display:block;font-size:13px;letter-spacing:.2px}
+      .brand span{display:block;font-size:12px;color:var(--mut)}
+      .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+      .i{width:18px;height:18px;flex:0 0 auto}.i.stroke{fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.i.fill{fill:currentColor}
+      .btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:12px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-weight:800;letter-spacing:.1px;transition:transform 220ms var(--ease),background 220ms var(--ease),border-color 220ms var(--ease),filter 220ms var(--ease)}
+      .btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);filter:saturate(1.1)}
+      .btn:active{transform:translateY(0) scale(.985)}
+      .btn.primary{background:linear-gradient(180deg,rgba(59,130,246,.34),rgba(59,130,246,.12));border-color:rgba(59,130,246,.44)}
+      .btn.cta{background:linear-gradient(180deg,rgba(234,88,12,.34),rgba(234,88,12,.12));border-color:rgba(234,88,12,.44)}
+      main{padding:0 0 36px}
+      .hero{padding:clamp(70px,10vw,140px) 0 64px}
+      .heroBox{border-radius:calc(var(--r) + 8px);border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04));box-shadow:var(--sh);padding:clamp(18px,3vw,28px);position:relative;overflow:hidden;backdrop-filter:saturate(140%) blur(10px)}
+      .heroBox:before{content:"";position:absolute;inset:-46%;background:radial-gradient(circle at 20% 22%,rgba(59,130,246,.24),transparent 56%),radial-gradient(circle at 76% 12%,rgba(168,85,247,.20),transparent 56%),radial-gradient(circle at 64% 78%,rgba(34,197,94,.16),transparent 62%);filter:blur(28px);opacity:.95;pointer-events:none}
+      .heroBox:after{content:"";position:absolute;inset:-2px;border-radius:calc(var(--r) + 10px);background:conic-gradient(from 210deg,rgba(59,130,246,.35),rgba(168,85,247,.22),rgba(34,197,94,.20),rgba(234,88,12,.28),rgba(59,130,246,.35));opacity:.22;filter:blur(18px);pointer-events:none;animation:hue 12s var(--ease) infinite}
+      @keyframes hue{0%{transform:translate3d(0,0,0) rotate(0deg)}50%{transform:translate3d(0,0,0) rotate(18deg)}100%{transform:translate3d(0,0,0) rotate(0deg)}}
+      .heroBox>*{position:relative}
+      .heroGrid{display:grid;grid-template-columns:1.05fr .95fr;gap:var(--gap2);align-items:center}
+      @media (max-width:980px){.heroGrid{grid-template-columns:1fr}}
+      .heroLeft{max-width:72ch}
+      h1{margin:0;font-weight:900;letter-spacing:-.045em;line-height:1.02;font-size:clamp(36px,4.8vw,64px)}
+      .grad{background:linear-gradient(90deg,rgba(59,130,246,1),rgba(168,85,247,1),rgba(34,197,94,1));-webkit-background-clip:text;background-clip:text;color:transparent}
+      .lead{margin-top:20px;color:var(--mut);font-size:clamp(16px,1.7vw,18px);line-height:1.75}
+      .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:24px}
+      .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;color:var(--mut2);font-size:13px}
+      .tag{display:inline-flex;align-items:center;gap:10px;padding:10px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.20);white-space:normal}
+      .tag .i{width:16px;height:16px}
+      .tag b{color:var(--txt);font-weight:800}
+      section{padding:72px 0}
+      .secHead{display:grid;gap:10px;margin-bottom:22px;place-items:center;text-align:center}
+      .secHead h2{margin:0;font-size:22px;letter-spacing:-.01em}
+      .secHead p{color:var(--mut);max-width:78ch}
+      .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap)}
+      @media (max-width:980px){.grid{grid-template-columns:1fr}}
+      .heroCards{display:grid;grid-template-columns:1fr;gap:var(--gap)}
+      .card{border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.22);padding:18px;transition:transform 220ms var(--ease),border-color 220ms var(--ease),background 220ms var(--ease)}
+      .card:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.20);background:rgba(0,0,0,.28)}
+      .cardTop{display:flex;align-items:center;justify-content:space-between;gap:12px}
+      .pill{display:inline-flex;align-items:center;gap:10px;padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.10);color:var(--mut);font-size:12px}
+      .pill .i{width:16px;height:16px}
+      .cardTop strong{font-size:13px;letter-spacing:.12px}
+      .card p{margin-top:10px;color:var(--mut);font-size:13px}
+      .shotList{display:grid;gap:18px}
+      .shotRow{--acc:rgba(59,130,246,.70);--shotw:clamp(420px,38vw,560px);display:grid;grid-template-columns:var(--shotw) 1fr;gap:var(--gap2);align-items:start;padding:20px;border-radius:var(--r);border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));box-shadow:0 18px 70px rgba(0,0,0,.34);transition:transform 220ms var(--ease),border-color 220ms var(--ease),background 220ms var(--ease)}
+      .shotRow:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.20);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.04))}
+      .shotImg{width:100%;max-width:var(--shotw);height:auto;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.22)}
+      .shotText{padding:10px 10px 10px 20px;position:relative}
+      .shotText:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:999px;background:linear-gradient(180deg,var(--acc),transparent)}
+      .kicker{display:inline-flex;align-items:center;gap:10px;color:var(--mut);font-weight:700;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+      .kdot{width:9px;height:9px;border-radius:999px;background:var(--acc);box-shadow:0 0 0 6px color-mix(in srgb,var(--acc) 22%,transparent)}
+      .shotText h3{margin:12px 0 0;font-size:19px;letter-spacing:-.01em}
+      .shotText p{margin-top:12px;color:var(--mut);max-width:70ch;line-height:1.8}
+      .mini{margin-top:16px;color:var(--mut2);font-size:13px;display:grid;gap:10px}
+      .mini span{display:flex;align-items:flex-start;gap:10px}
+      .mini .i{width:18px;height:18px;margin-top:1px;color:color-mix(in srgb,var(--acc) 80%,white)}
+      @media (max-width:980px){.shotRow{grid-template-columns:1fr}.shotImg{max-width:100%;justify-self:center}}
+      .download{border-radius:var(--r);border:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));box-shadow:var(--sh);padding:26px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px}
+      .download h2{margin:0;font-size:20px}.download p{margin-top:6px;color:var(--mut);max-width:76ch}
+      footer{padding:28px 0 34px;border-top:1px solid rgba(255,255,255,.10);color:var(--mut);font-size:13px}
+      .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+      @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.b1,.b2,.b3{animation:none}.btn,.card,.shotRow{transition:none}}
+    </style>
+  </head>
+  <body>
+    <div class="bg" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div></div>
+    <a class="skip" href="#main">跳到主要内容</a>
+    <header>
+      <div class="container">
+        <div class="nav" aria-label="顶部导航">
+          <a class="brand" href="./" aria-label="番茄专注 首页">
+            <img src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" alt="番茄专注 应用图标" width="44" height="44" />
+            <div><strong>番茄专注</strong><span>TomatoClock · PyQt6 · 桌面专注系统</span></div>
+          </a>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/SublimeCT/tomato-clock-pyqt6" target="_blank" rel="noreferrer" aria-label="打开 GitHub 仓库">
+              <svg class="i fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.4c.58.1.8-.25.8-.56v-2c-3.26.72-3.95-1.4-3.95-1.4-.54-1.36-1.32-1.72-1.32-1.72-1.08-.73.08-.72.08-.72 1.2.08 1.83 1.24 1.83 1.24 1.06 1.82 2.78 1.3 3.46 1 .1-.77.42-1.3.76-1.6-2.6-.3-5.33-1.3-5.33-5.82 0-1.29.46-2.34 1.22-3.17-.12-.3-.53-1.52.12-3.16 0 0 1-.32 3.3 1.21a11.4 11.4 0 0 1 6 0C17.74 4.4 18.74 4.72 18.74 4.72c.65 1.64.24 2.86.12 3.16.76.83 1.22 1.88 1.22 3.17 0 4.53-2.74 5.51-5.35 5.8.44.38.82 1.13.82 2.28v3.37c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+              GitHub
+            </a>
+            <a class="btn cta" href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases" target="_blank" rel="noreferrer" aria-label="打开 Releases 下载">
+              <svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10" /><path d="M8 10l4 4 4-4" /><path d="M4 21h16" /></svg>
+              下载
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+    <main id="main">
+      <section class="hero">
+        <div class="container">
+          <div class="heroBox">
+            <div class="heroGrid">
+              <div class="heroLeft">
+                <h1>🍅 番茄专注<br /><span class="grad" style="font-size: 40px;">把注意力留在任务上</span></h1>
+                <p class="lead">番茄专注（TomatoClock）是一款跨平台桌面番茄钟，但它更在意“过程”而不是“计时”。从开始到结束，你只需要做更少的选择：启动即进入专注，进度常驻状态栏/托盘，统计用来复盘节奏与规律。支持 Windows / MacOS / Linux</p>
+                <div class="ctas">
+                  <a class="btn cta" href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases" target="_blank" rel="noreferrer">
+                    <svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10" /><path d="M8 10l4 4 4-4" /><path d="M4 21h16" /></svg>
+                    下载
+                  </a>
+                  <a class="btn primary" href="https://github.com/SublimeCT/tomato-clock-pyqt6" target="_blank" rel="noreferrer">
+                    <svg class="i fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.4c.58.1.8-.25.8-.56v-2c-3.26.72-3.95-1.4-3.95-1.4-.54-1.36-1.32-1.72-1.32-1.72-1.08-.73.08-.72.08-.72 1.2.08 1.83 1.24 1.83 1.24 1.06 1.82 2.78 1.3 3.46 1 .1-.77.42-1.3.76-1.6-2.6-.3-5.33-1.3-5.33-5.82 0-1.29.46-2.34 1.22-3.17-.12-.3-.53-1.52.12-3.16 0 0 1-.32 3.3 1.21a11.4 11.4 0 0 1 6 0C17.74 4.4 18.74 4.72 18.74 4.72c.65 1.64.24 2.86.12 3.16.76.83 1.22 1.88 1.22 3.17 0 4.53-2.74 5.51-5.35 5.8.44.38.82 1.13.82 2.28v3.37c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+                    查看源码
+                  </a>
+                </div>
+                <div class="meta" aria-label="技术与平台">
+                  <span class="tag"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7h8" /><path d="M7 11h10" /><path d="M9 15h6" /><path d="M8 21h8a4 4 0 0 0 4-4V7a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v10a4 4 0 0 0 4 4z" /></svg><b>PyQt6</b> · QWidget</span>
+                  <span class="tag"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7h6" /><path d="M7 9v6" /><path d="M9 17h6" /><path d="M17 9v6" /></svg><b>Windows</b> · 桌面</span>
+                  <span class="tag"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2" /><path d="M12 20v2" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="M14.5 12a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" /></svg><b>macOS</b> · 桌面</span>
+                  <span class="tag"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M4 17h16" /><path d="M8 11h2" /><path d="M11 11h5" /></svg><b>Linux</b> · 桌面</span>
+                </div>
+              </div>
+              <div class="heroCards">
+                <div class="card"><div class="cardTop"><strong>启动更干净</strong><span class="pill"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8" /><path d="M12 8v8" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" /></svg>一键进入</span></div><p>把关键动作放到最短路径：打开就能开始，不让设置与选择偷走第一分钟。</p></div>
+                <div class="card"><div class="cardTop"><strong>过程更克制</strong><span class="pill"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2" /><path d="M12 20v2" /><path d="M14.5 12a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z" /></svg>少打断</span></div><p>用状态栏/托盘承载进度，让你不必“回去看一眼”，从而减少上下文切换。</p></div>
+                <div class="card"><div class="cardTop"><strong>反馈更可信</strong><span class="pill"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 15l3-3 3 2 4-6" /></svg>可复盘</span></div><p>用日历与年度视角记录投入，帮助你找到高效时间段与真实节奏，而不是凭感觉猜。</p></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="secHead"><h2>从计时工具到专注系统</h2><p>真正的损耗往往来自三件事：开始前犹豫、进行中切换、结束后没有反馈。番茄专注把它们做成一条更顺的路径，让专注更像习惯而不是任务。</p></div>
+          <div class="grid">
+            <div class="card"><div class="cardTop"><strong>启动：一键进入</strong><span class="pill"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l2.5 2.5" /><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z" /></svg>低摩擦</span></div><p>把关键动作放在最短路径：不让“先设置一下”消耗掉开始专注的动量。</p></div>
+            <div class="card"><div class="cardTop"><strong>进行：进度外置</strong><span class="pill"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2" /><path d="M12 20v2" /><path d="M2 12h2" /><path d="M20 12h2" /></svg>少切换</span></div><p>状态栏/托盘承载倒计时：你不需要回到应用里确认剩余时间，注意力持续停留在当前任务。</p></div>
+            <div class="card"><div class="cardTop"><strong>复盘：节奏可见</strong><span class="pill"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /><path d="M8 15l3-3 3 2 4-6" /></svg>有依据</span></div><p>用日历/年度视角看见趋势：什么时候高效、什么时候需要休息，让策略有据可依。</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="secHead"><h2>关键界面（用于理解，不占主角）</h2><p>每张截图只限制宽度、保持原始宽高比自适应高度；不提供点击放大；统一结构：左图右文，保持样式一致。</p></div>
+          <div class="shotList">
+            <div class="shotRow" style="--acc:rgba(59,130,246,.70)">
+              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/focus_tab.png" alt="专注页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Focus</span></div><h3>专注</h3><p>把“下一步做什么”放在最醒目处：计时、状态、切换动作形成一条线，不让你在界面里找路径。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8" /><path d="M12 8v8" /></svg><span>开始动作更明确，减少犹豫。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l2.5 2.5" /></svg><span>状态信息集中呈现，减少扫视成本。</span></span></div></div>
+            </div>
+            <div class="shotRow" style="--acc:rgba(168,85,247,.70)">
+              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/statistics_tab.png" alt="统计页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Stats</span></div><h3>统计</h3><p>用一眼能读懂的结构呈现趋势：你不是在“看图”，而是在确认自己是否在正确的节奏里。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /></svg><span>重点优先：先趋势，后细节。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10" /><path d="M7 12h10" /><path d="M7 17h10" /></svg><span>信息分组清晰，减少视觉噪音。</span></span></div></div>
+            </div>
+            <div class="shotRow" style="--acc:rgba(34,197,94,.70)">
+              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/statistics_tab_year.png" alt="年度统计页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Year</span></div><h3>年度</h3><p>把“我到底有没有坚持”变成可回答的问题：年度视角更适合看阶段性成果与季节性波动。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18" /><path d="M12 3v18" /></svg><span>更长周期更接近真实节奏。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2" /><path d="M12 20v2" /></svg><span>让复盘从“感觉”变成“依据”。</span></span></div></div>
+            </div>
+            <div class="shotRow" style="--acc:rgba(234,88,12,.70)">
+              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/settings_tab.png" alt="设置页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Settings</span></div><h3>设置</h3><p>设置不是“配置中心”，而是为了让你更少维护：把会影响体验的选项放在合理的位置，避免打断主流程。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16" /><path d="M12 4v16" /></svg><span>重要项优先：少而清晰。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11h6" /><path d="M10 15h4" /></svg><span>一致的控件节奏与反馈。</span></span></div></div>
+            </div>
+            <div class="shotRow" style="--acc:rgba(14,165,233,.70)">
+              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/tray_panel.png" alt="状态栏/托盘倒计时截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Tray</span></div><h3>状态栏 / 托盘</h3><p>把进度放在“视线边缘”：你专注在工作时，不需要回到应用里确认倒计时。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" /><path d="M12 6v12" /></svg><span>更少切换，更少中断。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l2.5 2.5" /></svg><span>进度可见但不侵占注意力。</span></span></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="container">
+          <div class="download" aria-label="下载区块">
+            <div><h2>下载与安装</h2><p>下载固定使用 GitHub Releases：选择最新版本，根据 Windows / macOS / Linux 选择对应构建产物（以 Releases 列表为准）。</p></div>
+            <div class="ctas">
+              <a class="btn cta" href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases" target="_blank" rel="noreferrer"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10" /><path d="M8 10l4 4 4-4" /><path d="M4 21h16" /></svg>打开 Releases</a>
+              <a class="btn primary" href="https://github.com/SublimeCT/tomato-clock-pyqt6" target="_blank" rel="noreferrer"><svg class="i fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.4c.58.1.8-.25.8-.56v-2c-3.26.72-3.95-1.4-3.95-1.4-.54-1.36-1.32-1.72-1.32-1.72-1.08-.73.08-.72.08-.72 1.2.08 1.83 1.24 1.83 1.24 1.06 1.82 2.78 1.3 3.46 1 .1-.77.42-1.3.76-1.6-2.6-.3-5.33-1.3-5.33-5.82 0-1.29.46-2.34 1.22-3.17-.12-.3-.53-1.52.12-3.16 0 0 1-.32 3.3 1.21a11.4 11.4 0 0 1 6 0C17.74 4.4 18.74 4.72 18.74 4.72c.65 1.64.24 2.86.12 3.16.76.83 1.22 1.88 1.22 3.17 0 4.53-2.74 5.51-5.35 5.8.44.38.82 1.13.82 2.28v3.37c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>查看仓库</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <div class="container">
+        <div class="foot"><div>TomatoClock · 番茄专注</div><div class="actions"><a class="btn cta" href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases" target="_blank" rel="noreferrer"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10" /><path d="M8 10l4 4 4-4" /><path d="M4 21h16" /></svg>下载</a></div></div>
+      </div>
+    </footer>
+  </body>
+</html>

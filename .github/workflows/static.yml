@@ -1,0 +1,51 @@
+name: Deploy Static Content to Pages
+
+on:
+  push:
+    branches: ["main"] # 如果你的默认分支叫 master，请改为 "master"
+
+# 设置 GITHUB_TOKEN 的权限，以允许部署到 GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 允许一个并发部署，跳过正在运行的部署
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Prepare static assets
+        run: |
+          mkdir -p home_page/assets home_page/screens
+          cp -f src/assets/app-icon.png home_page/assets/app-icon.png
+          cp -f docs/focus_tab.png home_page/screens/focus_tab.png
+          cp -f docs/statistics_tab.png home_page/screens/statistics_tab.png
+          cp -f docs/statistics_tab_year.png home_page/screens/statistics_tab_year.png
+          cp -f docs/settings_tab.png home_page/screens/settings_tab.png
+          cp -f docs/tray_panel.png home_page/screens/tray_panel.png
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 核心配置：直接将你项目中的 home_page 文件夹作为打包根目录
+          path: 'home_page'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
