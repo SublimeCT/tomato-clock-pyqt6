@@ -239,7 +239,7 @@ wheels = [
 
 [[package]]
 name = "tomato-clock-pyqt6"
-version = "0.1.1"
+version = "1.0.0"
 source = { virtual = "." }
 dependencies = [
     { name = "pyqt6" },
