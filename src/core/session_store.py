@@ -63,11 +63,39 @@ class SessionStore:
         )
         self._save()
 
+    def all_sessions(self) -> list[FocusSession]:
+        return list(self._sessions)
+
+    def years(self) -> list[int]:
+        years: set[int] = set()
+        for s in self._sessions:
+            try:
+                dt = datetime.fromisoformat(s.completed_at_iso)
+            except Exception:
+                continue
+            years.add(dt.year)
+        if not years:
+            years.add(date.today().year)
+        return sorted(years)
+
     def sessions_on(self, day: date) -> list[FocusSession]:
         prefix = day.isoformat()
         result: list[FocusSession] = []
         for s in self._sessions:
             if s.completed_at_iso.startswith(prefix):
+                result.append(s)
+        return result
+
+    def sessions_between(self, start_day: date, end_day: date) -> list[FocusSession]:
+        start = datetime.combine(start_day, datetime.min.time())
+        end = datetime.combine(end_day, datetime.max.time())
+        result: list[FocusSession] = []
+        for s in self._sessions:
+            try:
+                dt = datetime.fromisoformat(s.completed_at_iso)
+            except Exception:
+                continue
+            if start <= dt <= end:
                 result.append(s)
         return result
 
@@ -80,3 +108,11 @@ class SessionStore:
             counts[day] = counts.get(day, 0) + 1
         return counts
 
+    def minutes_by_day(self) -> dict[str, int]:
+        minutes: dict[str, int] = {}
+        for s in self._sessions:
+            day = s.completed_at_iso[:10]
+            if len(day) != 10:
+                continue
+            minutes[day] = minutes.get(day, 0) + int(s.minutes)
+        return minutes

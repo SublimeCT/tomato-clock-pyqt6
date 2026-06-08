@@ -18,12 +18,18 @@ class MainWindow(QMainWindow):
         self._sessions = sessions
 
         self.setWindowTitle("Tomato Clock")
-        self.setMinimumSize(320, 520)
+        self.setMinimumSize(600, 650)
+        self.resize(600, 650)
         self.setStyleSheet(
             "QMainWindow { background: #f6f7fb; }"
         )
 
-        self.focus_page = FocusPage(engine=self._engine, settings=self._settings)
+        self.focus_page = FocusPage(
+            engine=self._engine,
+            settings=self._settings,
+            on_open_focus_type_settings=self.open_focus_type_settings,
+            on_open_focus_duration_settings=self.open_focus_duration_settings,
+        )
         self.stats_page = StatsPage(sessions=self._sessions)
         self.settings_page = SettingsPage(engine=self._engine, settings=self._settings)
 
@@ -54,6 +60,22 @@ class MainWindow(QMainWindow):
         self.show()
         self.raise_()
         self.activateWindow()
+
+    def open_focus_type_settings(self) -> None:
+        self.bottom_nav.set_current_index(2)
+        self.pages.setCurrentIndex(2)
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        self.settings_page.open_focus_type_manager()
+
+    def open_focus_duration_settings(self) -> None:
+        self.bottom_nav.set_current_index(2)
+        self.pages.setCurrentIndex(2)
+        self.show()
+        self.raise_()
+        self.activateWindow()
+        self.settings_page.focus_durations()
 
     def closeEvent(self, event: QCloseEvent) -> None:
         event.ignore()

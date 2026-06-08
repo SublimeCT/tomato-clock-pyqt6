@@ -1,0 +1,76 @@
+name: Build and Upload Release Assets
+
+on:
+  push:
+    tags:
+      - 'v*' # 当你在本地打上以 v 开头的标签（如 v1.0.0）并推送时，自动触发打包
+
+jobs:
+  release:
+    name: Build Asset for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS 平台配置
+          - os: macos-latest
+            platform: macos
+            artifact_path: dist/TomatoClock.app
+            output_name: TomatoClock-macOS.zip
+            command: |
+              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --icon icon.icns src/main.py
+              # macOS 的 .app 实际是个文件夹，必须压缩成 .zip 才能上载到 Release
+              zip -r TomatoClock-macOS.zip dist/TomatoClock.app
+
+          # Windows 平台配置
+          - os: windows-latest
+            platform: windows
+            artifact_path: dist/TomatoClock.exe
+            output_name: TomatoClock-Windows.zip
+            command: |
+              # Windows 下没有 .icns 图标，通常使用 .ico。如果没有 icon.ico，PyInstaller 会自动忽略或报错。
+              # 这里默认兼容你的配置，若 Windows 下没有专门的 ico，可把 --icon 去掉或替换
+              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --icon icon.ico src/main.py
+              powershell Compress-Archive -Path dist/TomatoClock.exe -DestinationPath TomatoClock-Windows.zip
+
+          # Linux 平台配置
+          - os: ubuntu-latest
+            platform: linux
+            artifact_path: dist/TomatoClock
+            output_name: TomatoClock-Linux.tar.gz
+            command: |
+              # Linux 下打包通常是无窗口/依赖系统的，直接打包成二进制文件
+              uv run pyinstaller --name TomatoClock --clean --noconfirm src/main.py
+              tar -czvf TomatoClock-Linux.tar.gz dist/TomatoClock
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # 安装并配置最新版的 uv
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true # 开启缓存，加速后续的打包
+
+      # 显式让 uv 寻找或安装运行所需的 Python 3.14 环境
+      - name: Set up Python with uv
+        run: uv python install 3.14
+
+      # 同步依赖。uv 会自动根据 pyproject.toml 或 uv.lock 锁定的版本进行安装（包含 pyinstaller）
+      - name: Install Dependencies
+        run: uv sync
+
+      # 执行对应平台的打包命令
+      - name: Run PyInstaller Build
+        run: ${{ matrix.command }}
+
+      # 自动创建或将文件追加到对应的 GitHub Release 中
+      - name: Upload Asset to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ matrix.output_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -18,7 +18,7 @@ class TrayPopup(QWidget):
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.Tool
         )
-        self.setFixedSize(320, 240)
+        self.setFixedSize(280, 210)
         self.setStyleSheet(
             "QWidget { background-color: rgba(255,255,255,0.96); border: 1px solid rgba(0,0,0,0.10); border-radius: 18px; }"
             "QLabel { color: rgba(0,0,0,0.88); }"
@@ -28,13 +28,13 @@ class TrayPopup(QWidget):
         )
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(16, 16, 16, 16)
-        root.setSpacing(12)
+        root.setContentsMargins(14, 14, 14, 14)
+        root.setSpacing(10)
 
         self.time_label = QLabel("25:00", self)
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.time_label.setMinimumHeight(72)
-        self.time_label.setStyleSheet("font-size: 56px; font-weight: 800;")
+        self.time_label.setMinimumHeight(60)
+        self.time_label.setStyleSheet("font-size: 44px; font-weight: 800;")
 
         self.type_label = QLabel("默认专注", self)
         self.type_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -45,18 +45,18 @@ class TrayPopup(QWidget):
         actions_row.setSpacing(12)
 
         self.toggle_button = QPushButton("开始", self)
-        self.toggle_button.setMinimumHeight(42)
+        self.toggle_button.setMinimumHeight(40)
         self.toggle_button.clicked.connect(self._handle_toggle)
 
         self.open_main_button = QPushButton("打开主窗口", self)
-        self.open_main_button.setMinimumHeight(42)
+        self.open_main_button.setMinimumHeight(40)
         self.open_main_button.clicked.connect(self._handle_open_main)
 
         actions_row.addWidget(self.toggle_button, 1)
         actions_row.addWidget(self.open_main_button, 1)
 
         self.quit_button = QPushButton("退出", self)
-        self.quit_button.setMinimumHeight(42)
+        self.quit_button.setMinimumHeight(40)
         self.quit_button.clicked.connect(self._handle_quit)
 
         root.addWidget(self.time_label)

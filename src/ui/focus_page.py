@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
+from typing import Callable
+
+from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -11,15 +13,21 @@ from PyQt6.QtWidgets import (
 
 from src.core.pomodoro_engine import EngineState, PomodoroEngine
 from src.core.settings_store import SettingsStore
-from src.ui.duration_dialog import DurationDialog
-from src.ui.focus_type_dialog import FocusTypeDialog
 
 
 class FocusPage(QWidget):
-    def __init__(self, engine: PomodoroEngine, settings: SettingsStore):
+    def __init__(
+        self,
+        engine: PomodoroEngine,
+        settings: SettingsStore,
+        on_open_focus_type_settings: Callable[[], None],
+        on_open_focus_duration_settings: Callable[[], None],
+    ):
         super().__init__()
         self._engine = engine
         self._settings = settings
+        self._on_open_focus_type_settings = on_open_focus_type_settings
+        self._on_open_focus_duration_settings = on_open_focus_duration_settings
 
         root = QVBoxLayout(self)
         root.setContentsMargins(28, 28, 28, 28)
@@ -30,11 +38,20 @@ class FocusPage(QWidget):
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.time_label.setStyleSheet("font-size: 72px; font-weight: 800;")
 
+        self.phase_label = QLabel("专注", self)
+        self.phase_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.phase_label.setStyleSheet("font-size: 16px; font-weight: 650; color: rgba(0,0,0,0.55);")
+
+        self.break_hint = QLabel("", self)
+        self.break_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.break_hint.setStyleSheet("font-size: 14px; font-weight: 650; color: rgba(16,185,129,0.95);")
+        self.break_hint.hide()
+
         self.type_row = ChevronRow(title="专注类型", value="学习", parent=self)
-        self.type_row.clicked.connect(self._open_type_dialog)
+        self.type_row.clicked.connect(self._open_type_settings)
 
         self.duration_row = ChevronRow(title="专注时长", value="25 分钟", parent=self)
-        self.duration_row.clicked.connect(self._open_duration_dialog)
+        self.duration_row.clicked.connect(self._open_duration_settings)
 
         actions = QVBoxLayout()
         actions.setSpacing(12)
@@ -77,26 +94,31 @@ class FocusPage(QWidget):
         actions.addWidget(self.reset_button)
 
         root.addWidget(self.time_label)
+        root.addWidget(self.phase_label)
+        root.addWidget(self.break_hint)
         root.addWidget(self.type_row)
         root.addWidget(self.duration_row)
         root.addLayout(actions)
         root.addStretch(1)
 
         self._engine.state_changed.connect(self._on_state_changed)
+        self._engine.focus_completed.connect(self._on_focus_completed)
         self._on_state_changed(self._engine.state())
 
-    def _open_type_dialog(self) -> None:
-        dialog = FocusTypeDialog(settings=self._settings, current_type=self._engine.state().focus_type)
-        if dialog.exec() == FocusTypeDialog.DialogCode.Accepted:
-            self._engine.set_focus_type(dialog.selected_type())
+    def _open_type_settings(self) -> None:
+        self._on_open_focus_type_settings()
 
-    def _open_duration_dialog(self) -> None:
-        dialog = DurationDialog(current_minutes=self._settings.focus_minutes())
-        if dialog.exec() == DurationDialog.DialogCode.Accepted:
-            self._engine.set_focus_minutes(dialog.selected_minutes())
+    def _open_duration_settings(self) -> None:
+        self._on_open_focus_duration_settings()
 
     def _on_state_changed(self, state: EngineState) -> None:
         self.time_label.setText(state.time_str)
+        if state.phase == "focus":
+            self.phase_label.setText("专注")
+        elif state.phase == "short_break":
+            self.phase_label.setText("短休息")
+        else:
+            self.phase_label.setText("长休息")
         self.type_row.set_value(state.focus_type)
         self.duration_row.set_value(f"{self._settings.focus_minutes()} 分钟")
         self.type_row.setEnabled(state.phase == "focus")
@@ -105,7 +127,26 @@ class FocusPage(QWidget):
         if state.running:
             self.start_pause_button.setText("暂停")
         else:
-            self.start_pause_button.setText("开始")
+            if state.phase == "focus":
+                self.start_pause_button.setText("开始")
+            elif state.phase == "short_break":
+                self.start_pause_button.setText("开始休息")
+            else:
+                self.start_pause_button.setText("开始长休息")
+
+    def _on_focus_completed(self) -> None:
+        QTimer.singleShot(0, self._show_break_hint)
+
+    def _show_break_hint(self) -> None:
+        state = self._engine.state()
+        if state.phase == "short_break":
+            self.break_hint.setText("专注结束，开始短休息")
+        elif state.phase == "long_break":
+            self.break_hint.setText("专注结束，开始长休息")
+        else:
+            return
+        self.break_hint.show()
+        QTimer.singleShot(3500, self.break_hint.hide)
 
 
 class ChevronRow(QPushButton):
