@@ -9,6 +9,9 @@ jobs:
   release:
     name: Build Asset for ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    # 👇 关键核心：在这里添加权限声明
+    permissions:
+      contents: write  # 必须拥有运行写权限，才能创建 Release 并上传文件
     strategy:
       fail-fast: false
       matrix:
