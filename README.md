@@ -18,7 +18,12 @@ uv run src/main.py
 ### 打包
 
 ```bash
-uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --collect-all PyQt6 --icon icon.icns src/main.py
+uv run pyinstaller \
+  --name TomatoClock \
+  --windowed \
+  --clean \
+  --noconfirm \
+  --icon icon.icns src/main.py
 ```
 
 ```bash
