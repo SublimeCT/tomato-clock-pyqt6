@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
@@ -11,6 +12,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.pomodoro_engine import PomodoroEngine
 from src.core.settings_store import SettingsStore
+from src.utils.icon_loader import load_app_icon
 
 
 class SettingsPage(QWidget):
@@ -63,8 +65,23 @@ class SettingsPage(QWidget):
 
         about_group = QGroupBox("关于", self)
         about_layout = QVBoxLayout(about_group)
+        app_icon_label = QLabel(about_group)
+        pixmap = load_app_icon("app-icon.png").pixmap(128, 128)
+        if not pixmap.isNull():
+            app_icon_label.setPixmap(pixmap)
+            app_icon_label.setFixedHeight(144)
+            app_icon_label.setScaledContents(False)
+        app_icon_label.setStyleSheet("background: transparent;")
+        app_icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        about_layout.addWidget(app_icon_label)
         about_layout.addWidget(QLabel("Tomato Clock (PyQt6)", about_group))
         about_layout.addWidget(QLabel("托盘番茄钟 / 专注 / 统计", about_group))
+        repo_label = QLabel(about_group)
+        repo_label.setTextFormat(Qt.TextFormat.RichText)
+        repo_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        repo_label.setOpenExternalLinks(True)
+        repo_label.setText('开源仓库: <a href="https://github.com/SublimeCT/tomato-clock-pyqt6">https://github.com/SublimeCT/tomato-clock-pyqt6</a>')
+        about_layout.addWidget(repo_label)
 
         root.addWidget(durations_group)
         root.addWidget(about_group)

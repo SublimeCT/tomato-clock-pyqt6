@@ -1,12 +1,15 @@
 [project]
 name = "tomato-clock-pyqt6"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "pyqt6>=6.11.0",
 ]
+
+[project.urls]
+Repository = "https://github.com/SublimeCT/tomato-clock-pyqt6"
 
 [dependency-groups]
 dev = [

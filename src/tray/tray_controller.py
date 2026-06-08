@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt6.QtCore import QTimer, Qt
-from PyQt6.QtGui import QFont, QFontMetrics, QIcon, QPainter, QPixmap
+from PyQt6.QtGui import QCursor, QFont, QFontMetrics, QGuiApplication, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
 from src.core.pomodoro_engine import EngineState, PomodoroEngine
@@ -14,7 +14,7 @@ class TrayController:
         self._engine = engine
         self._main_window = main_window
         self._app_icon = app_icon
-        self._tray_base_icon = self._make_template_icon(self._app_icon)
+        self._tray_base_icon = self._make_tray_color_icon(self._app_icon)
 
         self._tray = QSystemTrayIcon()
         self._tray.setIcon(self._tray_base_icon)
@@ -31,20 +31,36 @@ class TrayController:
         self._tray.show()
         QTimer.singleShot(0, self._main_window.show_focus)
 
-    def toggle_popup(self) -> None:
-        if self._popup.isVisible():
-            self._popup.hide()
-            return
+    def show_popup(self) -> None:
         self._show_popup_near_tray_icon()
 
     def _show_popup_near_tray_icon(self) -> None:
-        screen = QApplication.primaryScreen()
         tray_geo = self._tray.geometry()
+        if tray_geo.width() <= 0 or tray_geo.height() <= 0:
+            cursor = QCursor.pos()
+            screen = QGuiApplication.screenAt(cursor) or QApplication.primaryScreen()
+            if screen is None:
+                self._popup.move(cursor.x(), cursor.y())
+            else:
+                geo = screen.availableGeometry()
+                x = cursor.x() - int(self._popup.width() / 2)
+                x = max(geo.x(), min(x, geo.x() + geo.width() - self._popup.width()))
+                y = cursor.y() + 8
+                if y + self._popup.height() > geo.y() + geo.height():
+                    y = max(geo.y(), cursor.y() - self._popup.height() - 8)
+                self._popup.move(x, y)
+            self._popup.show()
+            self._popup.raise_()
+            self._popup.activateWindow()
+            return
+
+        screen = QGuiApplication.screenAt(tray_geo.center()) or QApplication.primaryScreen()
         if screen is None:
             x = tray_geo.x()
             y = tray_geo.y() + tray_geo.height()
             self._popup.move(x, y)
             self._popup.show()
+            self._popup.raise_()
             self._popup.activateWindow()
             return
 
@@ -57,6 +73,7 @@ class TrayController:
 
         self._popup.move(x, y)
         self._popup.show()
+        self._popup.raise_()
         self._popup.activateWindow()
 
     def _on_tray_activated(self, reason) -> None:
@@ -65,7 +82,7 @@ class TrayController:
             QSystemTrayIcon.ActivationReason.Context,
             QSystemTrayIcon.ActivationReason.DoubleClick,
         ):
-            self.toggle_popup()
+            self.show_popup()
 
     def _on_state_changed(self, state: EngineState) -> None:
         self._popup.set_time_text(state.time_str)
@@ -78,27 +95,48 @@ class TrayController:
         else:
             self._tray.setIcon(self._tray_base_icon)
 
-    def _make_template_icon(self, icon: QIcon) -> QIcon:
+    def _make_tray_color_icon(self, icon: QIcon) -> QIcon:
         size = 18
         screen = QApplication.primaryScreen()
         dpr = float(screen.devicePixelRatio()) if screen is not None else 2.0
         source = icon.pixmap(int(size * dpr), int(size * dpr))
         source.setDevicePixelRatio(dpr)
 
-        out = QPixmap(source.size())
-        out.setDevicePixelRatio(source.devicePixelRatio())
-        out.fill(Qt.GlobalColor.transparent)
+        source = self._remove_solid_background(source, tolerance=80)
+        return QIcon(source)
 
-        painter = QPainter(out)
-        painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
-        painter.fillRect(out.rect(), Qt.GlobalColor.black)
-        painter.setCompositionMode(QPainter.CompositionMode.CompositionMode_DestinationIn)
-        painter.drawPixmap(0, 0, source)
-        painter.end()
+    def _remove_solid_background(self, pixmap: QPixmap, tolerance: int) -> QPixmap:
+        image = pixmap.toImage().convertToFormat(QImage.Format.Format_ARGB32)
+        w = image.width()
+        h = image.height()
+        if w <= 0 or h <= 0:
+            return pixmap
 
-        template = QIcon(out)
-        template.setIsMask(True)
-        return template
+        corners = [
+            image.pixelColor(0, 0),
+            image.pixelColor(w - 1, 0),
+            image.pixelColor(0, h - 1),
+            image.pixelColor(w - 1, h - 1),
+        ]
+
+        for y in range(h):
+            for x in range(w):
+                c = image.pixelColor(x, y)
+                if c.alpha() == 0:
+                    continue
+                for bg in corners:
+                    if (
+                        abs(c.red() - bg.red()) <= tolerance
+                        and abs(c.green() - bg.green()) <= tolerance
+                        and abs(c.blue() - bg.blue()) <= tolerance
+                    ):
+                        c.setAlpha(0)
+                        image.setPixelColor(x, y, c)
+                        break
+
+        out = QPixmap.fromImage(image)
+        out.setDevicePixelRatio(pixmap.devicePixelRatio())
+        return out
 
     def _build_tray_icon_with_time(self, time_str: str) -> QIcon:
         height = 18
@@ -108,7 +146,7 @@ class TrayController:
         screen = QApplication.primaryScreen()
         dpr = float(screen.devicePixelRatio()) if screen is not None else 2.0
 
-        font = QFont("Menlo", 14, QFont.Weight.Bold)
+        font = QFont("Menlo", 16, QFont.Weight.Bold)
         metrics = QFontMetrics(font)
         text_width = metrics.horizontalAdvance(time_str)
 
@@ -121,7 +159,7 @@ class TrayController:
         painter.setRenderHint(QPainter.RenderHint.TextAntialiasing, True)
         painter.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
 
-        painter.setPen(Qt.GlobalColor.black)
+        painter.setPen(QApplication.palette().color(QPalette.ColorRole.WindowText))
         painter.setFont(font)
 
         base_pixmap = self._tray_base_icon.pixmap(int(icon_size * dpr), int(icon_size * dpr))
@@ -137,9 +175,7 @@ class TrayController:
         )
         painter.end()
 
-        icon = QIcon(pixmap)
-        icon.setIsMask(True)
-        return icon
+        return QIcon(pixmap)
 
     def quit(self) -> None:
         self._tray.hide()
