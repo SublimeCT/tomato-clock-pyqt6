@@ -1,5 +1,21 @@
 # 番茄专注
 
+<p align="center">
+  <img src="./src/assets/app-icon-256.png" width="96" height="96" alt="番茄专注" />
+</p>
+
+<p align="center">
+  <a href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases">
+    <img alt="GitHub Release" src="https://img.shields.io/github/v/release/SublimeCT/tomato-clock-pyqt6?display_name=tag&sort=semver&style=flat-square" />
+  </a>
+  <a href="https://github.com/SublimeCT/tomato-clock-pyqt6/actions/workflows/release.yml">
+    <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/SublimeCT/tomato-clock-pyqt6/release.yml?style=flat-square" />
+  </a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-111827?style=flat-square" />
+  <img alt="Offline" src="https://img.shields.io/badge/offline-available-059669?style=flat-square" />
+  <img alt="Open Source" src="https://img.shields.io/badge/open--source-yes-2563eb?style=flat-square" />
+</p>
+
 | 页面 | 截图 | 说明 |
 |--- |--- |--- |
 | 专注 | ![](./docs/focus_tab.png) | |
