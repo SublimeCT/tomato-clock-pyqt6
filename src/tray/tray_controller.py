@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import subprocess
 import sys
 
-from PyQt6.QtCore import QByteArray, QBuffer, QTimer, Qt
+from PyQt6.QtCore import QByteArray, QBuffer, QPoint, QTimer, Qt
 from PyQt6.QtGui import QCursor, QFont, QFontMetrics, QGuiApplication, QIcon, QImage, QPainter, QPalette, QPixmap
 from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
-from src.core.pomodoro_engine import EngineState, PomodoroEngine
+from src.core.pomodoro_engine import EngineState, PhaseFinishedEvent, PomodoroEngine
+from src.core.settings_store import SettingsStore
 from src.ui.main_window import MainWindow
 from src.ui.tray_popup import TrayPopup
 if sys.platform == "darwin":
@@ -14,13 +16,16 @@ if sys.platform == "darwin":
 
 
 class TrayController:
-    def __init__(self, engine: PomodoroEngine, main_window: MainWindow, app_icon: QIcon):
+    def __init__(self, engine: PomodoroEngine, settings: SettingsStore, main_window: MainWindow, app_icon: QIcon):
         self._engine = engine
+        self._settings = settings
         self._main_window = main_window
         self._app_icon = app_icon
         self._tray_base_icon = self._make_tray_color_icon(self._app_icon)
         self._use_macos_status_item = sys.platform == "darwin"
         self._popup_ready = False
+        self._last_focus_type: str | None = None
+        self._focus_type_colors = self._settings.focus_type_colors()
 
         self._tray: QSystemTrayIcon | None = None
         self._mac_item: MacStatusItem | None = None
@@ -46,6 +51,7 @@ class TrayController:
             self._tray.activated.connect(self._on_tray_activated)
 
         self._engine.state_changed.connect(self._on_state_changed)
+        self._engine.phase_finished.connect(self._on_phase_finished)
         self._on_state_changed(self._engine.state())
 
         if self._tray is not None:
@@ -56,6 +62,9 @@ class TrayController:
     def show_popup(self) -> None:
         if not self._popup_ready:
             return
+        if self._popup.isVisible() and not self._popup.is_hiding():
+            self._popup.hide_animated()
+            return
         self._show_popup_near_tray_icon()
 
     def _show_popup_near_tray_icon(self) -> None:
@@ -63,7 +72,7 @@ class TrayController:
             cursor = QCursor.pos()
             screen = QGuiApplication.screenAt(cursor) or QApplication.primaryScreen()
             if screen is None:
-                self._popup.move(cursor.x(), cursor.y())
+                self._popup.show_at(QPoint(cursor.x(), cursor.y()))
             else:
                 geo = screen.availableGeometry()
                 x = cursor.x() - int(self._popup.width() / 2)
@@ -71,10 +80,7 @@ class TrayController:
                 y = cursor.y() + 8
                 if y + self._popup.height() > geo.y() + geo.height():
                     y = max(geo.y(), cursor.y() - self._popup.height() - 8)
-                self._popup.move(x, y)
-            self._popup.show()
-            self._popup.raise_()
-            self._popup.activateWindow()
+                self._popup.show_at(QPoint(x, y))
             return
 
         tray_geo = self._tray.geometry()
@@ -82,7 +88,7 @@ class TrayController:
             cursor = QCursor.pos()
             screen = QGuiApplication.screenAt(cursor) or QApplication.primaryScreen()
             if screen is None:
-                self._popup.move(cursor.x(), cursor.y())
+                self._popup.show_at(QPoint(cursor.x(), cursor.y()))
             else:
                 geo = screen.availableGeometry()
                 x = cursor.x() - int(self._popup.width() / 2)
@@ -90,20 +96,14 @@ class TrayController:
                 y = cursor.y() + 8
                 if y + self._popup.height() > geo.y() + geo.height():
                     y = max(geo.y(), cursor.y() - self._popup.height() - 8)
-                self._popup.move(x, y)
-            self._popup.show()
-            self._popup.raise_()
-            self._popup.activateWindow()
+                self._popup.show_at(QPoint(x, y))
             return
 
         screen = QGuiApplication.screenAt(tray_geo.center()) or QApplication.primaryScreen()
         if screen is None:
             x = tray_geo.x()
             y = tray_geo.y() + tray_geo.height()
-            self._popup.move(x, y)
-            self._popup.show()
-            self._popup.raise_()
-            self._popup.activateWindow()
+            self._popup.show_at(QPoint(x, y))
             return
 
         geo = screen.availableGeometry()
@@ -113,13 +113,10 @@ class TrayController:
         if y + self._popup.height() > geo.y() + geo.height():
             y = max(geo.y(), tray_geo.y() - self._popup.height() - 8)
 
-        self._popup.move(x, y)
-        self._popup.show()
-        self._popup.raise_()
-        self._popup.activateWindow()
+        self._popup.show_at(QPoint(x, y))
 
     def _open_main_from_popup(self) -> None:
-        self._popup.hide()
+        self._popup.hide_animated()
         self._main_window.show_focus()
 
     def _mark_popup_ready(self) -> None:
@@ -134,8 +131,12 @@ class TrayController:
             self.show_popup()
 
     def _on_state_changed(self, state: EngineState) -> None:
+        if state.focus_type != self._last_focus_type:
+            self._last_focus_type = state.focus_type
+            self._focus_type_colors = self._settings.focus_type_colors()
+        focus_color = self._focus_type_colors.get(state.focus_type, "#4F46E5")
         self._popup.set_time_text(state.time_str)
-        self._popup.set_focus_type_text(state.focus_type)
+        self._popup.set_focus_type_text(state.focus_type, color_hex=focus_color)
         self._popup.set_running(state.running)
 
         if self._use_macos_status_item and self._mac_item is not None:
@@ -152,6 +153,32 @@ class TrayController:
                 self._tray.setIcon(self._build_tray_icon_with_time(state.time_str))
             else:
                 self._tray.setIcon(self._tray_base_icon)
+
+    def _on_phase_finished(self, event: PhaseFinishedEvent) -> None:
+        QApplication.beep()
+        QTimer.singleShot(180, QApplication.beep)
+        if event.finished_phase == "focus":
+            if event.next_phase == "short_break":
+                msg = f"专注结束：{event.focus_type}，开始短休息"
+            elif event.next_phase == "long_break":
+                msg = f"专注结束：{event.focus_type}，开始长休息"
+            else:
+                msg = "专注结束"
+        else:
+            msg = "休息结束，开始专注"
+        self._show_system_notification("番茄专注", msg)
+
+    def _show_system_notification(self, title: str, message: str) -> None:
+        title = str(title)
+        message = str(message)
+        if sys.platform == "darwin":
+            esc = lambda s: str(s).replace("\\", "\\\\").replace('"', '\\"')
+            script = f'display notification "{esc(message)}" with title "{esc(title)}"'
+            subprocess.run(["osascript", "-e", script], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            return
+
+        if self._tray is not None and QSystemTrayIcon.supportsMessages():
+            self._tray.showMessage(title, message, QSystemTrayIcon.MessageIcon.Information, 4500)
 
     def _make_tray_color_icon(self, icon: QIcon) -> QIcon:
         size = 18

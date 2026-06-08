@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import sys
 from typing import Callable
 
-from PyQt6.QtCore import QSize, Qt
-from PyQt6.QtGui import QColor, QCursor, QIcon, QPainter, QPen, QPixmap
+from PyQt6.QtCore import QByteArray, QSize, Qt
+from PyQt6.QtGui import QColor, QCursor, QFont, QFontMetrics, QIcon, QPainter, QPen, QPixmap
+from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
 
@@ -61,7 +63,24 @@ def make_icon(kind: str, color: QColor, size: int = 22) -> QIcon:
     return QIcon(pixmap)
 
 
+def _supports_emoji(text: str, font: QFont) -> bool:
+    metrics = QFontMetrics(font)
+    return all(metrics.inFontUcs4(ord(ch)) for ch in str(text))
+
+
+def _svg_icon(svg: str, size: int) -> QIcon:
+    renderer = QSvgRenderer(QByteArray(svg.encode("utf-8")))
+    pixmap = QPixmap(size, size)
+    pixmap.fill(Qt.GlobalColor.transparent)
+    painter = QPainter(pixmap)
+    renderer.render(painter)
+    painter.end()
+    return QIcon(pixmap)
+
+
 class FocusTypeCard(QWidget):
+
+
     def __init__(
         self,
         focus_type: str,
@@ -132,8 +151,26 @@ class FocusTypeCard(QWidget):
             def build_btn(icon_kind: str) -> QToolButton:
                 b = QToolButton(self)
                 b.setCursor(Qt.CursorShape.PointingHandCursor)
-                b.setIcon(make_icon(icon_kind, icon_color, size=32))
-                b.setIconSize(QSize(28, 28))
+                emoji_map = {"palette": "🎨", "edit": "✏️", "trash": "🗑️"}
+                emoji = emoji_map.get(icon_kind, "•")
+                use_emoji = not sys.platform.startswith("linux") or _supports_emoji(emoji, b.font())
+                if use_emoji:
+                    f = b.font()
+                    f.setPointSize(max(12, f.pointSize() + 4))
+                    f.setBold(True)
+                    b.setFont(f)
+                    b.setText(emoji)
+                    b.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+                else:
+                    c = icon_color.name()
+                    if icon_kind == "palette":
+                        svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.7 0 2-1 2-2 0-.8-.4-1.5-1-2H9a3 3 0 0 1 0-6h6c1.7 0 3-1.3 3-3a3 3 0 0 0-3-3z"/><path d="M7.5 10.5h.01"/><path d="M9.5 7.5h.01"/><path d="M14.5 7.5h.01"/><path d="M16.5 10.5h.01"/></svg>'
+                    elif icon_kind == "edit":
+                        svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>'
+                    else:
+                        svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 16h10l1-16"/></svg>'
+                    b.setIcon(_svg_icon(svg, 32))
+                    b.setIconSize(QSize(28, 28))
                 b.setFixedSize(48, 48)
                 b.setStyleSheet(
                     "QToolButton { border: 0; padding: 10px; border-radius: 18px; background: transparent; }"

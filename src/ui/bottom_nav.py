@@ -3,7 +3,51 @@ from __future__ import annotations
 from PyQt6.QtCore import QByteArray, Qt, QSize, pyqtSignal
 from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
-from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QSizePolicy, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QWidget
+
+
+class VerticalIconButton(QPushButton):
+    def __init__(self, text: str, parent=None):
+        super().__init__(text, parent)
+        self.setCheckable(True)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+
+    def paintEvent(self, event) -> None:
+        painter = QPainter(self)
+        opt = QStyleOptionButton()
+        self.initStyleOption(opt)
+        style = self.style()
+        if style is None:
+            super().paintEvent(event)
+            return
+
+        style.drawControl(QStyle.ControlElement.CE_PushButtonBevel, opt, painter, self)
+
+        content = opt.rect.adjusted(16, 10, -16, -10)
+        icon_size = self.iconSize()
+        spacing = 1
+
+        state = QIcon.State.On if self.isChecked() else QIcon.State.Off
+        mode = QIcon.Mode.Normal if self.isEnabled() else QIcon.Mode.Disabled
+        pm = self.icon().pixmap(icon_size, mode, state) if not self.icon().isNull() else QPixmap()
+
+        y = content.y()
+        if not pm.isNull():
+            ix = content.x() + int((content.width() - icon_size.width()) / 2)
+            painter.drawPixmap(ix, y, icon_size.width(), icon_size.height(), pm)
+            y += icon_size.height() + spacing
+
+        painter.setFont(self.font())
+        painter.setPen(opt.palette.buttonText().color())
+        painter.drawText(
+            content.x(),
+            y,
+            content.width(),
+            max(0, content.bottom() - y),
+            Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
+            self.text(),
+        )
+        painter.end()
 
 
 class BottomNavBar(QWidget):
@@ -55,10 +99,9 @@ class BottomNavBar(QWidget):
             ),
         }
 
+        icon_size = 22
         for idx, label in enumerate(labels):
-            btn = QPushButton(label, self)
-            btn.setCheckable(True)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn = VerticalIconButton(label, self)
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             if label == "专注":
                 btn.setObjectName("nav_focus")
@@ -71,7 +114,8 @@ class BottomNavBar(QWidget):
             accent = accent_map.get(label, QColor("#111827"))
             if icon is not None:
                 btn.setIcon(self._recolor_icon(icon, accent=accent))
-                btn.setIconSize(QSize(22, 22))
+                btn.setIconSize(QSize(icon_size, icon_size))
+
             btn.clicked.connect(lambda _checked=False, i=idx: self.set_current_index(i))
             self._layout.addWidget(btn, 1)
             self._buttons.append(btn)

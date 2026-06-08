@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import QUrl, Qt
+from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
     QFormLayout,
     QGroupBox,
@@ -18,16 +19,35 @@ from src.ui.focus_type_dialog import FocusTypeDialog
 from src.utils.icon_loader import load_app_icon
 
 
+class LogoLabel(QLabel):
+    def mouseDoubleClickEvent(self, event) -> None:
+        QDesktopServices.openUrl(QUrl("https://sublimect.github.io/tomato-clock-pyqt6/"))
+        super().mouseDoubleClickEvent(event)
+
+
 class SettingsPage(QWidget):
     def __init__(self, engine: PomodoroEngine, settings: SettingsStore):
         super().__init__()
         self._engine = engine
         self._settings = settings
+        self.setObjectName("SettingsPage")
 
         self.setStyleSheet(
             "QGroupBox { border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; background: rgba(255,255,255,0.70); margin-top: 8px; }"
             "QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: rgba(0,0,0,0.65); }"
             "QLabel { color: rgba(0,0,0,0.75); }"
+            "QPushButton#ManageFocusTypeButton {"
+            "  border: 1px solid rgba(79,70,229,0.26);"
+            "  background: rgba(79,70,229,0.12);"
+            "  color: rgba(0,0,0,0.84);"
+            "  border-radius: 14px;"
+            "  font-size: 15px;"
+            "  font-weight: 750;"
+            "  padding: 10px 14px;"
+            "  text-align: center;"
+            "}"
+            "QPushButton#ManageFocusTypeButton:hover { background: rgba(79,70,229,0.18); }"
+            "QPushButton#ManageFocusTypeButton:pressed { background: rgba(79,70,229,0.24); }"
         )
 
         root = QVBoxLayout(self)
@@ -86,6 +106,8 @@ class SettingsPage(QWidget):
         row.addWidget(self.default_type_label)
 
         manage_btn = QPushButton("管理专注类型", focus_type_group)
+        manage_btn.setObjectName("ManageFocusTypeButton")
+        manage_btn.setText("🧩 管理专注类型")
         manage_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         manage_btn.setFixedHeight(42)
         manage_btn.clicked.connect(self.open_focus_type_manager)
@@ -97,7 +119,7 @@ class SettingsPage(QWidget):
         about_layout = QVBoxLayout(about_group)
         about_layout.setContentsMargins(14, 18, 14, 14)
         about_layout.setSpacing(10)
-        app_icon_label = QLabel(about_group)
+        app_icon_label = LogoLabel(about_group)
         pixmap = load_app_icon("app-icon.png").pixmap(128, 128)
         if not pixmap.isNull():
             app_icon_label.setPixmap(pixmap)

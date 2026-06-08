@@ -17,9 +17,17 @@ class EngineState:
     focus_type: str
 
 
+@dataclass(frozen=True)
+class PhaseFinishedEvent:
+    finished_phase: str
+    next_phase: str
+    focus_type: str
+
+
 class PomodoroEngine(QObject):
     state_changed = pyqtSignal(object)
     focus_completed = pyqtSignal()
+    phase_finished = pyqtSignal(object)
 
     def __init__(self, settings: SettingsStore, sessions: SessionStore):
         super().__init__()
@@ -105,6 +113,7 @@ class PomodoroEngine(QObject):
     def _on_phase_finished(self) -> None:
         self._timer.stop()
         self._running = False
+        finished_phase = self._phase
 
         if self._phase == "focus":
             started_at = self._focus_started_at or datetime.now()
@@ -129,8 +138,14 @@ class PomodoroEngine(QObject):
             self._phase = "focus"
             self._duration = QTime(0, self._settings.focus_minutes(), 0)
 
+        self.phase_finished.emit(
+            PhaseFinishedEvent(
+                finished_phase=finished_phase,
+                next_phase=self._phase,
+                focus_type=self._focus_type,
+            )
+        )
         self._emit_state()
 
     def _emit_state(self) -> None:
         self.state_changed.emit(self.state())
-

@@ -30,6 +30,6 @@ if __name__ == "__main__":
     sessions = SessionStore()
     engine = PomodoroEngine(settings=settings, sessions=sessions)
     window = MainWindow(engine=engine, settings=settings, sessions=sessions)
-    controller = TrayController(engine=engine, main_window=window, app_icon=app_icon)
+    controller = TrayController(engine=engine, settings=settings, main_window=window, app_icon=app_icon)
 
     sys.exit(app.exec())

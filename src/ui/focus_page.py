@@ -56,38 +56,45 @@ class FocusPage(QWidget):
         actions = QVBoxLayout()
         actions.setSpacing(12)
 
-        self.start_pause_button = QPushButton("开始", self)
-        self.start_pause_button.setObjectName("PrimaryButton")
+        self.start_pause_button = QPushButton("▶️ 开始", self)
+        self.start_pause_button.setObjectName("StartPauseButton")
+        self.start_pause_button.setProperty("state", "start")
+        self.start_pause_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.start_pause_button.setFixedHeight(52)
         self.start_pause_button.clicked.connect(self._engine.toggle)
         self.start_pause_button.setStyleSheet(
-            "QPushButton#PrimaryButton {"
-            "background: #2563EB;"
-            "color: white;"
+            "QPushButton#StartPauseButton {"
             "border: 1px solid rgba(0,0,0,0.08);"
             "border-radius: 16px;"
-            "font-size: 16px;"
-            "font-weight: 650;"
+            "font-size: 18px;"
+            "font-weight: 750;"
+            "padding: 10px 14px;"
             "}"
-            "QPushButton#PrimaryButton:hover { background: #1D4ED8; }"
-            "QPushButton#PrimaryButton:pressed { background: #1E40AF; }"
+            "QPushButton#StartPauseButton[state=\"start\"] { background: #2563EB; color: white; }"
+            "QPushButton#StartPauseButton[state=\"start\"]:hover { background: #1D4ED8; }"
+            "QPushButton#StartPauseButton[state=\"start\"]:pressed { background: #1E40AF; }"
+            "QPushButton#StartPauseButton[state=\"pause\"] { background: #F59E0B; color: rgba(0,0,0,0.88); }"
+            "QPushButton#StartPauseButton[state=\"pause\"]:hover { background: #D97706; }"
+            "QPushButton#StartPauseButton[state=\"pause\"]:pressed { background: #B45309; }"
         )
 
-        self.reset_button = QPushButton("重置", self)
-        self.reset_button.setObjectName("DangerButton")
+        self.reset_button = QPushButton("🔄 重置", self)
+        self.reset_button.setObjectName("ResetButton")
+        self.reset_button.setCursor(Qt.CursorShape.PointingHandCursor)
         self.reset_button.setFixedHeight(52)
         self.reset_button.clicked.connect(self._engine.reset_focus)
         self.reset_button.setStyleSheet(
-            "QPushButton#DangerButton {"
+            "QPushButton#ResetButton {"
             "background: rgba(239,68,68,0.12);"
             "color: rgba(185,28,28,0.95);"
             "border: 1px solid rgba(239,68,68,0.22);"
             "border-radius: 16px;"
-            "font-size: 16px;"
-            "font-weight: 650;"
+            "font-size: 18px;"
+            "font-weight: 750;"
+            "padding: 10px 14px;"
             "}"
-            "QPushButton#DangerButton:hover { background: rgba(239,68,68,0.16); }"
-            "QPushButton#DangerButton:pressed { background: rgba(239,68,68,0.22); }"
+            "QPushButton#ResetButton:hover { background: rgba(239,68,68,0.16); }"
+            "QPushButton#ResetButton:pressed { background: rgba(239,68,68,0.22); }"
         )
 
         actions.addWidget(self.start_pause_button)
@@ -125,14 +132,20 @@ class FocusPage(QWidget):
         self.duration_row.setEnabled(not state.running and state.phase == "focus")
 
         if state.running:
-            self.start_pause_button.setText("暂停")
+            self.start_pause_button.setProperty("state", "pause")
+            self.start_pause_button.setText("⏸ 暂停")
         else:
+            self.start_pause_button.setProperty("state", "start")
             if state.phase == "focus":
-                self.start_pause_button.setText("开始")
+                self.start_pause_button.setText("▶️ 开始")
             elif state.phase == "short_break":
-                self.start_pause_button.setText("开始休息")
+                self.start_pause_button.setText("☕ 开始休息")
             else:
-                self.start_pause_button.setText("开始长休息")
+                self.start_pause_button.setText("🛌 开始长休息")
+        style = self.start_pause_button.style()
+        if style is not None:
+            style.unpolish(self.start_pause_button)
+            style.polish(self.start_pause_button)
 
     def _on_focus_completed(self) -> None:
         QTimer.singleShot(0, self._show_break_hint)
