@@ -11,7 +11,7 @@ from src.tray.tray_controller import TrayController
 from src.ui.main_window import MainWindow
 from src.utils.icon_loader import load_app_icon
 
-from src.assets import reources_rc
+from src.assets import resources_rc
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -18,7 +18,7 @@
 
 | 页面 | 截图 | 说明 |
 |--- |--- |--- |
-| 专注 | ![](./docs/focus_tab.png) | |
+| 专注 | `MacOS`: ![](./docs/focus_tab.png) `Ubuntu`: ![](./docs/focus_tab_ubuntu.png) `Windows`: ![](./docs/focus_tab_windows.png) | |
 | 统计 | ![](./docs/statistics_tab.png) | |
 | 统计(年) | ![](./docs/statistics_tab_year.png) | |
 | 设置 | ![](./docs/settings_tab.png) | |
@@ -67,8 +67,9 @@ sudo apt install -y libxcb-cursor0
 ```bash
 # 安装依赖
 uv sync
+uv pip install -e .
 
-# 运行应用
+# 运行应用(或点击 `src/main.py` 的 `Run Python File` 按钮)
 uv run src/main.py
 ```
 
