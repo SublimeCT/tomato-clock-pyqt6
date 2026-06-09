@@ -4,6 +4,7 @@ import sys
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import QApplication
 
+from src.app_metadata import get_app_metadata
 from src.core.pomodoro_engine import PomodoroEngine
 from src.core.session_store import SessionStore
 from src.core.settings_store import SettingsStore
@@ -11,10 +12,19 @@ from src.tray.tray_controller import TrayController
 from src.ui.main_window import MainWindow
 from src.utils.icon_loader import load_app_icon
 
-from src.assets import resources_rc
+from src.assets import resources_rc as _resources_rc
+
+_ = _resources_rc
 
 if __name__ == "__main__":
+    app_metadata = get_app_metadata()
     app = QApplication(sys.argv)
+    app.setApplicationName(app_metadata.app_name)
+    app.setApplicationDisplayName(app_metadata.display_name)
+    app.setApplicationVersion(app_metadata.version)
+    app.setOrganizationName(app_metadata.organization_name)
+    app.setOrganizationDomain(app_metadata.organization_domain)
+    app.setDesktopFileName(app_metadata.desktop_file_name)
     app.setQuitOnLastWindowClosed(False)
 
     app_icon = load_app_icon("app-icon-44.png")

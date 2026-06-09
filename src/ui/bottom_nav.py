@@ -99,7 +99,7 @@ class BottomNavBar(QWidget):
             ),
         }
 
-        icon_size = 22
+        icon_size = 26
         for idx, label in enumerate(labels):
             btn = VerticalIconButton(label, self)
             btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)

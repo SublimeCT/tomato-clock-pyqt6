@@ -1,7 +1,4 @@
 from __future__ import annotations
-
-import sys
-
 from PyQt6.QtCore import QUrl, Qt
 from PyQt6.QtGui import QDesktopServices
 from PyQt6.QtWidgets import (
@@ -15,6 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from src.app_metadata import get_app_metadata
 from src.core.pomodoro_engine import PomodoroEngine
 from src.core.settings_store import SettingsStore
 from src.ui.focus_type_dialog import FocusTypeDialog
@@ -30,11 +28,10 @@ class LogoLabel(QLabel):
 class SettingsPage(QWidget):
     def __init__(self, engine: PomodoroEngine, settings: SettingsStore):
         super().__init__()
+        app_metadata = get_app_metadata()
         self._engine = engine
         self._settings = settings
         self.setObjectName("SettingsPage")
-
-        app_version = self._read_project_version()
         self.setStyleSheet(
             "QGroupBox { border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; background: rgba(255,255,255,0.70); margin-top: 8px; }"
             "QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: rgba(0,0,0,0.65); }"
@@ -134,7 +131,7 @@ class SettingsPage(QWidget):
         app_icon_label.setStyleSheet("background: transparent;")
         app_icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         about_layout.addWidget(app_icon_label, 0, Qt.AlignmentFlag.AlignHCenter)
-        title_label = QLabel(f"番茄专注(v{app_version})", about_group)
+        title_label = QLabel(f"{app_metadata.display_name}(v{app_metadata.version})", about_group)
         title_label.setStyleSheet("font-size: 16px; font-weight: 700; color: rgba(0,0,0,0.86);")
         about_layout.addWidget(title_label, 0, Qt.AlignmentFlag.AlignHCenter)
         about_layout.addWidget(QLabel("状态栏番茄钟 / 专注 / 统计", about_group), 0, Qt.AlignmentFlag.AlignHCenter)
@@ -143,7 +140,7 @@ class SettingsPage(QWidget):
         repo_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
         repo_label.setOpenExternalLinks(True)
         repo_label.setWordWrap(True)
-        repo_label.setText('<p style="text-align: center;">开源仓库: <a href="https://github.com/SublimeCT/tomato-clock-pyqt6">https://github.com/SublimeCT/tomato-clock-pyqt6</a></p>')
+        repo_label.setText(f'<p style="text-align: center;">开源仓库: <a href="{app_metadata.repository_url}">{app_metadata.repository_url}</a></p>')
         about_layout.addWidget(repo_label)
 
         root.addWidget(durations_group)
@@ -162,42 +159,6 @@ class SettingsPage(QWidget):
 
     def focus_durations(self) -> None:
         self.focus_spin.setFocus()
-
-    def _read_project_version(self) -> str:
-        try:
-            import tomllib
-        except Exception:
-            return "0.0.0"
-        try:
-            from pathlib import Path
-
-            if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
-                pyproject_path = Path(getattr(sys, "_MEIPASS")) / "pyproject.toml"
-            else:
-                pyproject_path = Path(__file__).resolve().parents[2] / "pyproject.toml"
-
-            if pyproject_path.exists():
-                raw = pyproject_path.read_bytes()
-                data = tomllib.loads(raw.decode("utf-8"))
-                version = data.get("project", {}).get("version", None)
-                if isinstance(version, str) and version.strip():
-                    return version.strip()
-        except Exception:
-            pass
-
-        try:
-            from importlib.metadata import PackageNotFoundError, version
-
-            for dist_name in ("tomato-clock-pyqt6", "tomato_clock_pyqt6"):
-                try:
-                    v = version(dist_name)
-                    if isinstance(v, str) and v.strip():
-                        return v.strip()
-                except PackageNotFoundError:
-                    continue
-        except Exception:
-            pass
-        return "0.0.0"
 
     def open_focus_type_manager(self) -> None:
         dialog = FocusTypeDialog(settings=self._settings, current_type=self._settings.default_focus_type())
