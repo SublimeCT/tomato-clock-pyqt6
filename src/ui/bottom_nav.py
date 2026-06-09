@@ -58,6 +58,7 @@ class BottomNavBar(QWidget):
         self._buttons: list[QPushButton] = []
         self._current = 0
 
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
         self.setFixedHeight(78)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setStyleSheet(
