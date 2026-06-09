@@ -84,6 +84,13 @@ uv run src/main.py
 
 `rcc` 命令来自 `qt` 工具链, 不包含在 `PyQt6` 包中
 
+### 发布新版本
+本项目基于 `Github Actions` 工作流, 只需提交 `tag` 即可自动打包
+
+```bash
+git tag add v1.0.5 && git push origin v1.0.5
+```
+
 ### 打包
 
 ```bash
