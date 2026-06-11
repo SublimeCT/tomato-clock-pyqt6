@@ -1,164 +1,171 @@
 from __future__ import annotations
-from PyQt6.QtCore import QUrl, Qt
+
+from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import (
-    QFormLayout,
-    QGroupBox,
-    QHBoxLayout,
-    QLabel,
-    QPushButton,
-    QSpinBox,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from src.app_metadata import get_app_metadata
 from src.core.pomodoro_engine import PomodoroEngine
 from src.core.settings_store import SettingsStore
 from src.ui.focus_type_dialog import FocusTypeDialog
+from src.ui.settings_controls import StepperControl
+from src.ui.ui_theme import BG, BORDER, MUTED, SUCCESS, TEXT, apply_fixed_policy, apply_panel_policy, rgba
 from src.utils.icon_loader import load_app_icon
-
-
-class LogoLabel(QLabel):
-    def mouseDoubleClickEvent(self, event) -> None:
-        QDesktopServices.openUrl(QUrl("https://sublimect.github.io/tomato-clock-pyqt6/"))
-        super().mouseDoubleClickEvent(event)
 
 
 class SettingsPage(QWidget):
     def __init__(self, engine: PomodoroEngine, settings: SettingsStore):
         super().__init__()
-        app_metadata = get_app_metadata()
         self._engine = engine
         self._settings = settings
-        self.setObjectName("SettingsPage")
-        self.setStyleSheet(
-            "QGroupBox { border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; background: rgba(255,255,255,0.70); margin-top: 8px; }"
-            "QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 6px; color: rgba(0,0,0,0.65); }"
-            "QLabel { color: rgba(0,0,0,0.75); }"
-            "QPushButton#ManageFocusTypeButton {"
-            "  border: 1px solid rgba(79,70,229,0.26);"
-            "  background: rgba(79,70,229,0.12);"
-            "  color: rgba(0,0,0,0.84);"
-            "  border-radius: 14px;"
-            "  font-size: 15px;"
-            "  font-weight: 750;"
-            "  padding: 10px 14px;"
-            "  text-align: center;"
-            "}"
-            "QPushButton#ManageFocusTypeButton:hover { background: rgba(79,70,229,0.18); }"
-            "QPushButton#ManageFocusTypeButton:pressed { background: rgba(79,70,229,0.24); }"
-        )
+        self._meta = get_app_metadata()
+        self.setStyleSheet("SettingsPage { background: #FDF6F0; }")
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(24, 24, 24, 24)
-        root.setSpacing(14)
+        root.setContentsMargins(0, 0, 0, 24)
+        root.setSpacing(0)
 
-        durations_group = QGroupBox("时长", self)
-        durations_form = QFormLayout(durations_group)
-        durations_form.setContentsMargins(14, 14, 14, 14)
-        durations_form.setHorizontalSpacing(12)
-        durations_form.setVerticalSpacing(10)
+        body = QWidget(self)
+        body_layout = QVBoxLayout(body)
+        body_layout.setContentsMargins(24, 24, 24, 0)
+        body_layout.setSpacing(20)
+        body_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        self.focus_spin = QSpinBox(self)
-        self.focus_spin.setRange(1, 180)
-        self.focus_spin.setValue(self._settings.focus_minutes())
-        self.focus_spin.setSuffix(" 分钟")
-        self.focus_spin.valueChanged.connect(self._on_focus_changed)
-        self.focus_spin.setFixedWidth(160)
+        durations = self._build_section("时长设置")
+        durations_layout = durations.layout()
+        assert durations_layout is not None
+        self.focus_stepper = self._build_stepper(1, 180, self._settings.focus_minutes(), "分钟", self._on_focus_changed)
+        self.short_break_stepper = self._build_stepper(1, 60, self._settings.short_break_minutes(), "分钟", self._on_short_break_changed)
+        self.long_break_stepper = self._build_stepper(1, 90, self._settings.long_break_minutes(), "分钟", self._on_long_break_changed)
+        self.long_break_every_stepper = self._build_stepper(1, 12, self._settings.long_break_every(), "次", self._on_long_break_every_changed)
+        durations_layout.addWidget(self._setting_row("专注时长", "每次专注的分钟数", self.focus_stepper))
+        durations_layout.addWidget(self._setting_row("短休息", "专注间的短暂休息", self.short_break_stepper))
+        durations_layout.addWidget(self._setting_row("长休息", "多个番茄周期后", self.long_break_stepper))
+        durations_layout.addWidget(self._setting_row("长休息间隔", "每 N 次专注后长休息", self.long_break_every_stepper))
 
-        self.short_break_spin = QSpinBox(self)
-        self.short_break_spin.setRange(1, 60)
-        self.short_break_spin.setValue(self._settings.short_break_minutes())
-        self.short_break_spin.setSuffix(" 分钟")
-        self.short_break_spin.valueChanged.connect(self._on_short_break_changed)
-        self.short_break_spin.setFixedWidth(160)
-
-        self.long_break_spin = QSpinBox(self)
-        self.long_break_spin.setRange(1, 90)
-        self.long_break_spin.setValue(self._settings.long_break_minutes())
-        self.long_break_spin.setSuffix(" 分钟")
-        self.long_break_spin.valueChanged.connect(self._on_long_break_changed)
-        self.long_break_spin.setFixedWidth(160)
-
-        self.long_break_every_spin = QSpinBox(self)
-        self.long_break_every_spin.setRange(1, 12)
-        self.long_break_every_spin.setValue(self._settings.long_break_every())
-        self.long_break_every_spin.setSuffix(" 次")
-        self.long_break_every_spin.valueChanged.connect(self._on_long_break_every_changed)
-        self.long_break_every_spin.setFixedWidth(160)
-
-        durations_form.addRow("默认专注时长", self._right_align_field(self.focus_spin, parent=durations_group))
-        durations_form.addRow("短休息时长", self._right_align_field(self.short_break_spin, parent=durations_group))
-        durations_form.addRow("长休息时长", self._right_align_field(self.long_break_spin, parent=durations_group))
-        durations_form.addRow("长休息所需次数", self._right_align_field(self.long_break_every_spin, parent=durations_group))
-
-        focus_type_group = QGroupBox("专注类型", self)
-        focus_type_layout = QVBoxLayout(focus_type_group)
-        focus_type_layout.setContentsMargins(14, 14, 14, 14)
-        focus_type_layout.setSpacing(10)
-
-        row = QHBoxLayout()
-        row.setSpacing(10)
-        title = QLabel("默认类型", focus_type_group)
-        title.setStyleSheet("color: rgba(0,0,0,0.55);")
-        self.default_type_label = QLabel(self._settings.default_focus_type(), focus_type_group)
-        self.default_type_label.setStyleSheet("font-weight: 650;")
-        row.addWidget(title)
-        row.addStretch(1)
-        row.addWidget(self.default_type_label)
-
-        manage_btn = QPushButton("管理专注类型", focus_type_group)
-        manage_btn.setObjectName("ManageFocusTypeButton")
-        manage_btn.setText("🧩 管理专注类型")
+        focus_type = self._build_section("专注类型")
+        focus_type_layout = focus_type.layout()
+        assert focus_type_layout is not None
+        type_row = QWidget(self)
+        type_row.setObjectName("SettingsRow")
+        apply_fixed_policy(type_row, 76)
+        type_row.setStyleSheet("QWidget#SettingsRow { background: transparent; border-top: 1px solid rgba(0,0,0,0.06); }")
+        type_layout = QHBoxLayout(type_row)
+        type_layout.setContentsMargins(20, 14, 20, 14)
+        type_layout.setSpacing(12)
+        icon_box = QLabel("▣", type_row)
+        icon_box.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        icon_box.setFixedSize(36, 36)
+        icon_box.setStyleSheet(
+            f"background: {rgba('#4F46E5', 0.10)}; color: #4F46E5; border-radius: 12px; font-size: 18px; font-weight: 700;"
+        )
+        info_box = QVBoxLayout()
+        info_box.setContentsMargins(0, 0, 0, 0)
+        info_box.setSpacing(2)
+        info_box.addWidget(self._text_label("默认类型", 15, 500, TEXT))
+        self.default_type_label = self._text_label(self._settings.default_focus_type(), 12, 400, MUTED)
+        info_box.addWidget(self.default_type_label)
+        type_info = QWidget(type_row)
+        type_info.setLayout(info_box)
+        manage_btn = QPushButton("管理", type_row)
+        apply_fixed_policy(manage_btn, 36)
+        manage_btn.setFixedWidth(76)
         manage_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        manage_btn.setFixedHeight(42)
+        manage_btn.setStyleSheet(
+            f"QPushButton {{ background: white; color: #4A4A5A; border: 1px solid {BORDER}; border-radius: 8px; font-size: 13px; font-weight: 600; }}"
+            f"QPushButton:hover {{ background: {BG}; }}"
+        )
         manage_btn.clicked.connect(self.open_focus_type_manager)
+        type_layout.addWidget(icon_box, 0)
+        type_layout.addWidget(type_info, 1)
+        type_layout.addWidget(manage_btn, 0)
+        focus_type_layout.addWidget(type_row)
 
-        focus_type_layout.addLayout(row)
-        focus_type_layout.addWidget(manage_btn)
-
-        about_group = QGroupBox("关于", self)
-        about_layout = QVBoxLayout(about_group)
-        about_layout.setContentsMargins(14, 18, 14, 14)
-        about_layout.setSpacing(10)
-        app_icon_label = LogoLabel(about_group)
-        pixmap = load_app_icon("app-icon.png").pixmap(128, 128)
+        about = self._build_section("")
+        about_row = QWidget(self)
+        apply_fixed_policy(about_row, 104)
+        about_layout = QHBoxLayout(about_row)
+        about_layout.setContentsMargins(20, 20, 20, 20)
+        about_layout.setSpacing(16)
+        app_icon = QLabel(about_row)
+        app_icon.setFixedSize(64, 64)
+        app_icon.setStyleSheet("background: transparent;")
+        pixmap = load_app_icon("app-icon.png").pixmap(64, 64)
         if not pixmap.isNull():
-            app_icon_label.setPixmap(pixmap)
-            app_icon_label.setFixedSize(128, 128)
-            app_icon_label.setScaledContents(False)
-        app_icon_label.setStyleSheet("background: transparent;")
-        app_icon_label.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
-        about_layout.addWidget(app_icon_label, 0, Qt.AlignmentFlag.AlignHCenter)
-        title_label = QLabel(f"{app_metadata.display_name}(v{app_metadata.version})", about_group)
-        title_label.setStyleSheet("font-size: 16px; font-weight: 700; color: rgba(0,0,0,0.86);")
-        about_layout.addWidget(title_label, 0, Qt.AlignmentFlag.AlignHCenter)
-        about_layout.addWidget(QLabel("状态栏番茄钟 / 专注 / 统计", about_group), 0, Qt.AlignmentFlag.AlignHCenter)
-        repo_label = QLabel(about_group)
-        repo_label.setTextFormat(Qt.TextFormat.RichText)
-        repo_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
-        repo_label.setOpenExternalLinks(True)
-        repo_label.setWordWrap(True)
-        repo_label.setText(f'<p style="text-align: center;">开源仓库: <a href="{app_metadata.repository_url}">{app_metadata.repository_url}</a></p>')
-        about_layout.addWidget(repo_label)
+            app_icon.setPixmap(pixmap)
+        info = QVBoxLayout()
+        info.setContentsMargins(0, 0, 0, 0)
+        info.setSpacing(2)
+        info.addWidget(self._text_label(self._meta.display_name, 18, 600, TEXT))
+        info.addWidget(self._text_label(f"版本 {self._meta.version}", 13, 400, MUTED))
+        repo = QLabel(f"<a href='{self._meta.repository_url}'>GitHub 仓库 -></a>", about_row)
+        repo.setTextFormat(Qt.TextFormat.RichText)
+        repo.setTextInteractionFlags(Qt.TextInteractionFlag.TextBrowserInteraction)
+        repo.setOpenExternalLinks(False)
+        repo.linkActivated.connect(lambda _: QDesktopServices.openUrl(QUrl(self._meta.repository_url)))
+        repo.setStyleSheet(f"color: {SUCCESS}; font-size: 13px;")
+        info.addWidget(repo)
+        about_info = QWidget(about_row)
+        about_info.setLayout(info)
+        about_layout.addWidget(app_icon, 0)
+        about_layout.addWidget(about_info, 1)
+        about_layout_root = about.layout()
+        assert about_layout_root is not None
+        about_layout_root.addWidget(about_row)
 
-        root.addWidget(durations_group)
-        root.addWidget(focus_type_group)
-        root.addWidget(about_group)
-        root.addStretch(1)
+        body_layout.addWidget(durations)
+        body_layout.addWidget(focus_type)
+        body_layout.addWidget(about)
+        body_layout.addStretch(1)
+        root.addWidget(body, 1)
 
-    def _right_align_field(self, field: QWidget, *, parent: QWidget) -> QWidget:
-        wrap = QWidget(parent)
-        row = QHBoxLayout(wrap)
-        row.setContentsMargins(0, 0, 0, 0)
-        row.setSpacing(0)
-        row.addStretch(1)
-        row.addWidget(field, 0, Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-        return wrap
+    def _build_section(self, title: str) -> QWidget:
+        section = QWidget(self)
+        section.setObjectName("SettingsSection")
+        apply_panel_policy(section)
+        section.setStyleSheet("QWidget#SettingsSection { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; }")
+        layout = QVBoxLayout(section)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        if title:
+            header = QLabel(title, section)
+            apply_fixed_policy(header, 40)
+            header.setContentsMargins(20, 16, 20, 8)
+            header.setStyleSheet(f"color: {MUTED}; font-size: 13px; font-weight: 600; letter-spacing: 1px;")
+            layout.addWidget(header)
+        return section
+
+    def _build_stepper(self, minimum: int, maximum: int, value: int, unit: str, callback) -> StepperControl:
+        stepper = StepperControl(minimum, maximum, value, unit, self)
+        stepper.valueChanged.connect(callback)
+        return stepper
+
+    def _setting_row(self, title: str, subtitle: str, field: QWidget) -> QWidget:
+        row = QWidget(self)
+        row.setObjectName("SettingsRow")
+        apply_fixed_policy(row, 72)
+        row.setStyleSheet("QWidget#SettingsRow { background: transparent; border-top: 1px solid rgba(0,0,0,0.06); }")
+        layout = QHBoxLayout(row)
+        layout.setContentsMargins(20, 14, 20, 14)
+        layout.setSpacing(12)
+        info = QVBoxLayout()
+        info.setContentsMargins(0, 0, 0, 0)
+        info.setSpacing(2)
+        info.addWidget(self._text_label(title, 15, 500, TEXT))
+        info.addWidget(self._text_label(subtitle, 12, 400, MUTED))
+        info_wrap = QWidget(row)
+        info_wrap.setLayout(info)
+        layout.addWidget(info_wrap, 1)
+        layout.addWidget(field, 0)
+        return row
+
+    def _text_label(self, text: str, size: int, weight: int, color: str) -> QLabel:
+        label = QLabel(text, self)
+        label.setStyleSheet(f"color: {color}; font-size: {size}px; font-weight: {weight}; background: transparent;")
+        return label
 
     def focus_durations(self) -> None:
-        self.focus_spin.setFocus()
+        self.focus_stepper.setFocus()
 
     def open_focus_type_manager(self) -> None:
         dialog = FocusTypeDialog(settings=self._settings, current_type=self._settings.default_focus_type())

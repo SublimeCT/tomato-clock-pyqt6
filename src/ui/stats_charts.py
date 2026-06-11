@@ -9,6 +9,8 @@ from PyQt6.QtGui import QColor, QCursor, QFont, QPainter, QPen
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QStackedWidget, QVBoxLayout, QWidget
 from PyQt6.QtWidgets import QToolTip
 
+from src.ui.ui_theme import ACCENT, MUTED, SUCCESS, TEXT, apply_fixed_policy, apply_panel_policy, rgba
+
 
 class StatsModeBar(QWidget):
     mode_changed = pyqtSignal(str)
@@ -18,13 +20,12 @@ class StatsModeBar(QWidget):
         self._buttons: dict[str, QPushButton] = {}
         self._mode = "day"
 
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setFixedHeight(44)
+        apply_fixed_policy(self, 44)
         self.setStyleSheet(
-            "StatsModeBar { background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; }"
-            "QPushButton { border: 0; background: transparent; font-size: 15px; font-weight: 650; color: rgba(0,0,0,0.62); }"
-            "QPushButton:hover { background: rgba(0,0,0,0.06); border-radius: 12px; }"
-            "QPushButton:checked { background: rgba(0,0,0,0.10); color: rgba(0,0,0,0.92); border-radius: 12px; }"
+            "StatsModeBar { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; }"
+            f"QPushButton {{ border: 0; background: transparent; font-size: 14px; font-weight: 600; color: {MUTED}; border-radius: 8px; }}"
+            f"QPushButton:hover {{ color: {TEXT}; }}"
+            f"QPushButton:checked {{ background: {rgba(SUCCESS, 0.10)}; color: {SUCCESS}; }}"
         )
 
         layout = QHBoxLayout(self)
@@ -36,7 +37,7 @@ class StatsModeBar(QWidget):
             btn = QPushButton(label, self)
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
             btn.clicked.connect(lambda _checked=False, k=key: self.set_mode(k))
             layout.addWidget(btn, 1)
             self._buttons[key] = btn
@@ -69,16 +70,16 @@ class BarLineChart(QWidget):
         self._title = "统计"
         self._points: list[SeriesPoint] = []
         self.setMinimumHeight(240)
-        self.setStyleSheet(
-            "BarLineChart { background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; }"
-        )
+        apply_panel_policy(self, 240)
+        self.setStyleSheet("BarLineChart { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; }")
 
         root = QVBoxLayout(self)
         root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(8)
 
         self._title_label = QLabel(self)
-        self._title_label.setStyleSheet("font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.86);")
+        apply_fixed_policy(self._title_label, 28)
+        self._title_label.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {TEXT};")
 
         self._chart = QChart()
         legend = self._chart.legend()
@@ -145,15 +146,15 @@ class BarLineChart(QWidget):
         bar_set = QBarSet("时长")
         for p in self._points:
             bar_set.append(float(p.minutes))
-        bar_set.setColor(QColor(79, 70, 229, 90))
-        bar_set.setBorderColor(QColor(79, 70, 229, 140))
+        bar_set.setColor(QColor(SUCCESS))
+        bar_set.setBorderColor(QColor(SUCCESS))
 
         bar_series = QBarSeries()
         bar_series.append(bar_set)
 
         line_series = QLineSeries()
         line_series.setName("次数")
-        line_pen = QPen(QColor("#4F46E5"))
+        line_pen = QPen(QColor(ACCENT))
         line_pen.setWidth(2)
         line_series.setPen(line_pen)
         for i, p in enumerate(self._points):

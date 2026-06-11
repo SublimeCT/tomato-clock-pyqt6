@@ -5,6 +5,8 @@ from PyQt6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import QHBoxLayout, QPushButton, QSizePolicy, QStyle, QStyleOptionButton, QWidget
 
+from src.ui.ui_theme import ACCENT, MUTED, TEXT, apply_fixed_policy, rgba
+
 
 class VerticalIconButton(QPushButton):
     def __init__(self, text: str, parent=None):
@@ -23,9 +25,9 @@ class VerticalIconButton(QPushButton):
 
         style.drawControl(QStyle.ControlElement.CE_PushButtonBevel, opt, painter, self)
 
-        content = opt.rect.adjusted(16, 10, -16, -10)
+        content = opt.rect.adjusted(10, 6, -10, -6)
         icon_size = self.iconSize()
-        spacing = 1
+        spacing = 5
 
         state = QIcon.State.On if self.isChecked() else QIcon.State.Off
         mode = QIcon.Mode.Normal if self.isEnabled() else QIcon.Mode.Disabled
@@ -37,13 +39,16 @@ class VerticalIconButton(QPushButton):
             painter.drawPixmap(ix, y, icon_size.width(), icon_size.height(), pm)
             y += icon_size.height() + spacing
 
-        painter.setFont(self.font())
+        font = self.font()
+        font.setPointSize(12)
+        font.setWeight(600)
+        painter.setFont(font)
         painter.setPen(opt.palette.buttonText().color())
         painter.drawText(
             content.x(),
             y,
             content.width(),
-            max(0, content.bottom() - y),
+            max(0, content.height() - (y - content.y())),
             Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop,
             self.text(),
         )
@@ -58,19 +63,12 @@ class BottomNavBar(QWidget):
         self._buttons: list[QPushButton] = []
         self._current = 0
 
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setFixedHeight(78)
-        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        apply_fixed_policy(self, 78)
         self.setStyleSheet(
-            "BottomNavBar { background: rgba(255,255,255,0.92); border-top: 1px solid rgba(0,0,0,0.10); }"
-            "QPushButton { border: 0; margin: 0; background: transparent; color: rgba(0,0,0,0.62); font-size: 16px; font-weight: 650; padding: 0 16px; }"
-            "QPushButton:hover { background: rgba(0,0,0,0.06); }"
-            "QPushButton#nav_focus:checked { background: rgba(79,70,229,0.14); color: #4F46E5; }"
-            "QPushButton#nav_stats:checked { background: rgba(16,185,129,0.14); color: #10B981; }"
-            "QPushButton#nav_settings:checked { background: rgba(249,115,22,0.14); color: #F97316; }"
-            "QPushButton#nav_focus:hover { background: rgba(79,70,229,0.10); }"
-            "QPushButton#nav_stats:hover { background: rgba(16,185,129,0.10); }"
-            "QPushButton#nav_settings:hover { background: rgba(249,115,22,0.10); }"
+            f"BottomNavBar {{ background: rgba(255,255,255,0.88); border-top: 1px solid {rgba('#000000', 0.06)}; }}"
+            f"QPushButton {{ border: 0; margin: 0; background: transparent; color: {MUTED}; font-size: 12px; font-weight: 600; padding: 6px 20px; border-radius: 12px; }}"
+            f"QPushButton:hover {{ background: {rgba(ACCENT, 0.08)}; color: {TEXT}; }}"
+            f"QPushButton:checked {{ background: {rgba(ACCENT, 0.10)}; color: {ACCENT}; }}"
         )
 
         self._layout = QHBoxLayout(self)
@@ -100,10 +98,11 @@ class BottomNavBar(QWidget):
             ),
         }
 
-        icon_size = 26
+        icon_size = 24
         for idx, label in enumerate(labels):
             btn = VerticalIconButton(label, self)
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            btn.setFixedHeight(66)
             if label == "专注":
                 btn.setObjectName("nav_focus")
             elif label == "统计":
@@ -132,15 +131,15 @@ class BottomNavBar(QWidget):
         self.current_changed.emit(index)
 
     def _make_tab_icon(self, svg: str) -> QIcon:
-        normal = self._render_svg(svg, 22, QColor("#6B7280"))
-        selected = self._render_svg(svg, 22, QColor("#111827"))
+        normal = self._render_svg(svg, 24, QColor(MUTED))
+        selected = self._render_svg(svg, 24, QColor(ACCENT))
         icon = QIcon()
         icon.addPixmap(normal, QIcon.Mode.Normal, QIcon.State.Off)
         icon.addPixmap(selected, QIcon.Mode.Normal, QIcon.State.On)
         return icon
 
     def _recolor_icon(self, base: QIcon, accent: QColor) -> QIcon:
-        off = base.pixmap(22, 22, QIcon.Mode.Normal, QIcon.State.Off)
+        off = base.pixmap(24, 24, QIcon.Mode.Normal, QIcon.State.Off)
         on = self._tint_pixmap(off, accent)
         icon = QIcon()
         icon.addPixmap(off, QIcon.Mode.Normal, QIcon.State.Off)

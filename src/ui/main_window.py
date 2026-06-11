@@ -8,6 +8,7 @@ from src.ui.bottom_nav import BottomNavBar
 from src.ui.focus_page import FocusPage
 from src.ui.settings_page import SettingsPage
 from src.ui.stats_page import StatsPage
+from src.ui.ui_theme import BG
 
 
 class MainWindow(QMainWindow):
@@ -17,11 +18,11 @@ class MainWindow(QMainWindow):
         self._settings = settings
         self._sessions = sessions
 
-        self.setWindowTitle("Tomato Clock")
-        self.setMinimumSize(600, 650)
-        self.resize(600, 650)
+        self.setWindowTitle("番茄专注")
+        self.setMinimumSize(680, 820)
+        self.resize(680, 820)
         self.setStyleSheet(
-            "QMainWindow { background: #f6f7fb; }"
+            f"QMainWindow {{ background: {BG}; }}"
         )
 
         self.focus_page = FocusPage(
@@ -34,6 +35,7 @@ class MainWindow(QMainWindow):
         self.settings_page = SettingsPage(engine=self._engine, settings=self._settings)
 
         self.pages = QStackedWidget(self)
+        self.pages.setStyleSheet("QStackedWidget { background: transparent; }")
         self.pages.addWidget(self.focus_page)
         self.pages.addWidget(self.stats_page)
         self.pages.addWidget(self.settings_page)
@@ -44,6 +46,7 @@ class MainWindow(QMainWindow):
         self.bottom_nav.set_current_index(0)
 
         container = QWidget(self)
+        container.setStyleSheet("background: transparent;")
         layout = QVBoxLayout(container)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)

@@ -5,6 +5,8 @@ from datetime import date
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QWidget
 
+from src.ui.ui_theme import ACCENT, BORDER, MUTED, SUCCESS, TEXT, apply_fixed_policy, apply_panel_policy, rgba
+
 
 class MonthGrid(QWidget):
     month_changed = pyqtSignal(int, int)
@@ -19,6 +21,8 @@ class MonthGrid(QWidget):
         self._counts: dict[int, int] = {}
         self._buttons: dict[int, QPushButton] = {}
 
+        apply_panel_policy(self)
+        self.setStyleSheet("background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px;")
         root = QGridLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setHorizontalSpacing(10)
@@ -31,24 +35,27 @@ class MonthGrid(QWidget):
 
         self.prev_btn = QPushButton("<", header)
         self.prev_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.prev_btn.setFixedSize(36, 36)
+        apply_fixed_policy(self.prev_btn, 36)
+        self.prev_btn.setFixedWidth(36)
         self.prev_btn.clicked.connect(lambda: self.set_year(self._year - 1, emit=True))
 
         self.title = QLabel(header)
         self.title.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-        self.title.setStyleSheet("font-size: 16px; font-weight: 700; color: rgba(0,0,0,0.78);")
+        apply_fixed_policy(self.title, 36)
+        self.title.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {TEXT};")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.next_btn = QPushButton(">", header)
         self.next_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.next_btn.setFixedSize(36, 36)
+        apply_fixed_policy(self.next_btn, 36)
+        self.next_btn.setFixedWidth(36)
         self.next_btn.clicked.connect(lambda: self.set_year(self._year + 1, emit=True))
 
         for btn in (self.prev_btn, self.next_btn):
             btn.setStyleSheet(
-                "QPushButton { border: 1px solid rgba(0,0,0,0.10); border-radius: 12px; background: rgba(255,255,255,0.80); font-weight: 700; }"
-                "QPushButton:hover { border: 1px solid rgba(0,0,0,0.18); background: rgba(0,0,0,0.04); }"
-                "QPushButton:pressed { background: rgba(0,0,0,0.08); }"
+                f"QPushButton {{ border: 1px solid {BORDER}; border-radius: 12px; background: white; font-weight: 700; color: {TEXT}; }}"
+                f"QPushButton:hover {{ background: {rgba(ACCENT, 0.08)}; }}"
+                f"QPushButton:pressed {{ background: {rgba(ACCENT, 0.14)}; }}"
             )
 
         header_row.addWidget(self.prev_btn, 0)
@@ -62,12 +69,13 @@ class MonthGrid(QWidget):
             btn = QPushButton(names[i], self)
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            btn.setFixedHeight(64)
             btn.clicked.connect(lambda _checked=False, month=m: self.set_month(month))
             btn.setStyleSheet(
-                "QPushButton { border: 1px solid rgba(0,0,0,0.10); border-radius: 14px; background: rgba(255,255,255,0.80); font-weight: 650; }"
-                "QPushButton:hover { border: 1px solid rgba(0,0,0,0.18); }"
-                "QPushButton:checked { background: rgba(16,185,129,0.16); border: 1px solid rgba(16,185,129,0.24); }"
+                f"QPushButton {{ border: 1px solid {BORDER}; border-radius: 14px; background: white; color: {TEXT}; font-weight: 650; }}"
+                f"QPushButton:hover {{ border: 1px solid {rgba(ACCENT, 0.30)}; }}"
+                f"QPushButton:checked {{ background: {rgba(SUCCESS, 0.10)}; border: 1px solid {rgba(SUCCESS, 0.24)}; color: {SUCCESS}; }}"
             )
             r = 1 + i // 4
             c = i % 4
@@ -137,16 +145,16 @@ class MonthGrid(QWidget):
             if allowed:
                 btn.setStyleSheet(
                     "QPushButton {"
-                    f"border: 1px solid rgba(0,0,0,0.10); border-radius: 14px; background: rgba(16,185,129,{alpha:.2f});"
-                    "font-weight: 650; }"
-                    "QPushButton:hover { border: 1px solid rgba(0,0,0,0.18); }"
-                    "QPushButton:checked { background: rgba(16,185,129,0.24); border: 1px solid rgba(16,185,129,0.28); }"
+                    f"border: 1px solid {BORDER}; border-radius: 14px; background: rgba(42,157,143,{alpha:.2f});"
+                    f"font-weight: 650; color: {TEXT}; }}"
+                    f"QPushButton:hover {{ border: 1px solid {rgba(ACCENT, 0.30)}; }}"
+                    f"QPushButton:checked {{ background: {rgba(SUCCESS, 0.18)}; border: 1px solid {rgba(SUCCESS, 0.26)}; color: {SUCCESS}; }}"
                 )
             else:
                 btn.setStyleSheet(
                     "QPushButton {"
                     "border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; background: rgba(0,0,0,0.04);"
-                    "font-weight: 650; color: rgba(0,0,0,0.35); }"
+                    f"font-weight: 650; color: {MUTED}; }}"
                 )
 
         self.next_btn.setEnabled(self._year < self._today_year)
@@ -163,6 +171,8 @@ class YearGrid(QWidget):
         self._page_start = self._year - (self._year % 12)
         self._buttons: dict[int, QPushButton] = {}
 
+        apply_panel_policy(self)
+        self.setStyleSheet("background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px;")
         root = QGridLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setHorizontalSpacing(10)
@@ -175,24 +185,27 @@ class YearGrid(QWidget):
 
         self.prev_btn = QPushButton("<", header)
         self.prev_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.prev_btn.setFixedSize(36, 36)
+        apply_fixed_policy(self.prev_btn, 36)
+        self.prev_btn.setFixedWidth(36)
         self.prev_btn.clicked.connect(lambda: self.set_page_start(self._page_start - 12))
 
         self.title = QLabel(header)
         self.title.setTextInteractionFlags(Qt.TextInteractionFlag.NoTextInteraction)
-        self.title.setStyleSheet("font-size: 16px; font-weight: 700; color: rgba(0,0,0,0.78);")
+        apply_fixed_policy(self.title, 36)
+        self.title.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {TEXT};")
         self.title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.next_btn = QPushButton(">", header)
         self.next_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.next_btn.setFixedSize(36, 36)
+        apply_fixed_policy(self.next_btn, 36)
+        self.next_btn.setFixedWidth(36)
         self.next_btn.clicked.connect(lambda: self.set_page_start(self._page_start + 12))
 
         for btn in (self.prev_btn, self.next_btn):
             btn.setStyleSheet(
-                "QPushButton { border: 1px solid rgba(0,0,0,0.10); border-radius: 12px; background: rgba(255,255,255,0.80); font-weight: 700; }"
-                "QPushButton:hover { border: 1px solid rgba(0,0,0,0.18); background: rgba(0,0,0,0.04); }"
-                "QPushButton:pressed { background: rgba(0,0,0,0.08); }"
+                f"QPushButton {{ border: 1px solid {BORDER}; border-radius: 12px; background: white; font-weight: 700; color: {TEXT}; }}"
+                f"QPushButton:hover {{ background: {rgba(ACCENT, 0.08)}; }}"
+                f"QPushButton:pressed {{ background: {rgba(ACCENT, 0.14)}; }}"
             )
 
         header_row.addWidget(self.prev_btn, 0)
@@ -206,7 +219,8 @@ class YearGrid(QWidget):
             btn = QPushButton(str(y), self)
             btn.setCheckable(True)
             btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            btn.setFixedHeight(64)
             btn.clicked.connect(lambda _checked=False, year=y: self.set_year(year))
             root.addWidget(btn, 1 + i // cols, i % cols)
             self._buttons[y] = btn
@@ -271,10 +285,10 @@ class YearGrid(QWidget):
                 base_border = "rgba(0,0,0,0.08)"
             btn.setStyleSheet(
                 "QPushButton {"
-                f"border: 1px solid {base_border}; border-radius: 14px; background: {base_bg}; font-weight: 650;"
+                f"border: 1px solid {base_border}; border-radius: 14px; background: {base_bg}; font-weight: 650; color: {TEXT};"
                 "}"
-                "QPushButton:hover { border: 1px solid rgba(0,0,0,0.18); }"
-                "QPushButton:checked { background: rgba(79,70,229,0.20); border: 1px solid rgba(79,70,229,0.28); }"
+                f"QPushButton:hover {{ border: 1px solid {rgba(ACCENT, 0.30)}; }}"
+                f"QPushButton:checked {{ background: {rgba(ACCENT, 0.10)}; border: 1px solid {rgba(ACCENT, 0.22)}; color: {ACCENT}; }}"
             )
 
         self.next_btn.setEnabled(self._page_start + 11 < self._today_year)

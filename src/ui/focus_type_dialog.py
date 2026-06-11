@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from src.core.settings_store import SettingsStore
 from src.ui.focus_type_cards import FocusTypeCard
+from src.ui.ui_theme import ACCENT, BG, BORDER, MUTED, TEXT, apply_fixed_policy, rgba
 
 
 class FocusTypeDialog(QDialog):
@@ -31,21 +32,20 @@ class FocusTypeDialog(QDialog):
 
         self.setWindowTitle("选择专注类型")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setMinimumSize(650, 560)
+        self.setMinimumSize(600, 560)
         self.setStyleSheet(
-            "QDialog { background: #ffffff; }"
+            f"QDialog {{ background: {BG}; }}"
             "QScrollArea { background: transparent; }"
             "QScrollArea QWidget { background: transparent; }"
-            "QLabel { color: rgba(0,0,0,0.82); }"
-            "QPushButton { padding: 6px 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,0.10); background: rgba(255,255,255,1.0); }"
-            "QPushButton:hover { background: rgba(0,0,0,0.03); }"
-            "QPushButton:pressed { background: rgba(0,0,0,0.06); }"
-            "QPushButton#AddBtn { border: 1px solid rgba(16,185,129,0.35); background: rgba(16,185,129,0.14); color: rgba(0,0,0,0.80); font-weight: 700; }"
-            "QPushButton#AddBtn:hover { background: rgba(16,185,129,0.20); }"
-            "QPushButton#OkBtn { border: 1px solid rgba(79,70,229,0.35); background: rgba(79,70,229,0.14); color: rgba(0,0,0,0.80); font-weight: 700; }"
-            "QPushButton#OkBtn:hover { background: rgba(79,70,229,0.20); }"
-            "QPushButton#CancelBtn { border: 1px solid rgba(0,0,0,0.12); background: rgba(0,0,0,0.02); color: rgba(0,0,0,0.78); font-weight: 650; }"
-            "QPushButton#CancelBtn:hover { background: rgba(0,0,0,0.04); }"
+            f"QLabel {{ color: {TEXT}; }}"
+            f"QPushButton {{ padding: 6px 12px; border-radius: 10px; border: 1px solid {BORDER}; background: white; }}"
+            f"QPushButton:hover {{ background: {rgba(ACCENT, 0.08)}; }}"
+            f"QPushButton:pressed {{ background: {rgba(ACCENT, 0.14)}; }}"
+            f"QPushButton#AddBtn {{ border: 1px solid {ACCENT}; background: {ACCENT}; color: white; font-weight: 700; }}"
+            f"QPushButton#AddBtn:hover {{ background: #D62828; }}"
+            f"QPushButton#OkBtn {{ border: 1px solid {ACCENT}; background: {ACCENT}; color: white; font-weight: 700; }}"
+            f"QPushButton#OkBtn:hover {{ background: #D62828; }}"
+            f"QPushButton#CancelBtn {{ border: 1px solid {BORDER}; background: white; color: {TEXT}; font-weight: 650; }}"
         )
 
         root = QVBoxLayout(self)
@@ -55,9 +55,11 @@ class FocusTypeDialog(QDialog):
         header = QHBoxLayout()
         header.setSpacing(10)
         title = QLabel("专注类型", self)
-        title.setStyleSheet("font-size: 18px; font-weight: 700;")
+        apply_fixed_policy(title, 28)
+        title.setStyleSheet(f"font-size: 20px; font-weight: 600; color: {TEXT};")
         subtitle = QLabel("默认类型不可编辑；自定义类型支持添加/重命名/删除。", self)
-        subtitle.setStyleSheet("color: rgba(0,0,0,0.55);")
+        apply_fixed_policy(subtitle, 24)
+        subtitle.setStyleSheet(f"color: {MUTED};")
 
         add_btn = QPushButton("添加", self)
         add_btn.setObjectName("AddBtn")

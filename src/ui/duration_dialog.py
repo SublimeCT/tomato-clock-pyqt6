@@ -3,6 +3,8 @@ from __future__ import annotations
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QDialog, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
+from src.ui.ui_theme import ACCENT, BG, BORDER, MUTED, TEXT, apply_fixed_policy, apply_panel_policy, rgba
+
 
 class DurationDialog(QDialog):
     def __init__(self, current_minutes: int):
@@ -11,8 +13,8 @@ class DurationDialog(QDialog):
 
         self.setWindowTitle("选择专注时长")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setMinimumSize(520, 420)
-        self.setStyleSheet("QDialog { background: #f6f7fb; }")
+        self.setMinimumSize(480, 420)
+        self.setStyleSheet(f"QDialog {{ background: {BG}; }}")
 
         root = QVBoxLayout(self)
         root.setContentsMargins(18, 18, 18, 18)
@@ -20,18 +22,22 @@ class DurationDialog(QDialog):
 
         header = QHBoxLayout()
         title = QLabel("专注时长", self)
-        title.setStyleSheet("font-size: 18px; font-weight: 700;")
+        apply_fixed_policy(title, 28)
+        title.setStyleSheet(f"font-size: 20px; font-weight: 600; color: {TEXT};")
         hint = QLabel("点击选择一个预设时长。", self)
-        hint.setStyleSheet("color: rgba(0,0,0,0.55);")
+        apply_fixed_policy(hint, 24)
+        hint.setStyleSheet(f"color: {MUTED};")
         header.addWidget(title)
         header.addStretch(1)
         header.addWidget(hint)
 
         content = QWidget(self)
+        apply_panel_policy(content)
+        content.setStyleSheet(f"background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px;")
         grid = QGridLayout(content)
-        grid.setContentsMargins(6, 6, 6, 6)
-        grid.setHorizontalSpacing(12)
-        grid.setVerticalSpacing(12)
+        grid.setContentsMargins(16, 16, 16, 16)
+        grid.setHorizontalSpacing(10)
+        grid.setVerticalSpacing(10)
 
         durations = [10, 15, 20, 25, 30, 35, 40, 45, 50, 60, 75, 90]
         col_count = 3
@@ -42,6 +48,11 @@ class DurationDialog(QDialog):
 
         footer = QHBoxLayout()
         cancel = QPushButton("取消", self)
+        apply_fixed_policy(cancel, 40)
+        cancel.setStyleSheet(
+            f"QPushButton {{ background: white; border: 1px solid {BORDER}; border-radius: 8px; color: {TEXT}; padding: 0 24px; font-weight: 600; }}"
+            f"QPushButton:hover {{ background: {rgba(ACCENT, 0.08)}; color: {ACCENT}; }}"
+        )
         cancel.clicked.connect(self.reject)
         footer.addStretch(1)
         footer.addWidget(cancel)
@@ -63,22 +74,14 @@ class DurationCard(QPushButton):
         super().__init__(parent)
         self.setCheckable(False)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setFixedHeight(74)
+        apply_fixed_policy(self, 84)
         self.setText(f"{int(minutes)} 分钟")
         self.setStyleSheet(
-            "QPushButton {"
-            "background: rgba(255,255,255,0.92);"
-            "border: 1px solid rgba(0,0,0,0.10);"
-            "border-radius: 16px;"
-            "font-size: 16px;"
-            "font-weight: 700;"
-            "color: rgba(0,0,0,0.92);"
-            "}"
-            "QPushButton:hover { border: 1px solid rgba(0,0,0,0.18); }"
-            "QPushButton:pressed { background: rgba(245,245,245,1.0); }"
+            f"QPushButton {{ background: white; border: 2px solid rgba(0,0,0,0.06); border-radius: 14px; font-size: 18px; font-weight: 700; color: {TEXT}; }}"
+            f"QPushButton:hover {{ border: 2px solid {BORDER}; background: {BG}; }}"
         )
         if selected:
             self.setStyleSheet(
                 self.styleSheet()
-                + "QPushButton { border: 2px solid rgba(37,99,235,0.65); }"
+                + f"QPushButton {{ border: 2px solid {ACCENT}; background: {rgba(ACCENT, 0.08)}; color: {ACCENT}; }}"
             )

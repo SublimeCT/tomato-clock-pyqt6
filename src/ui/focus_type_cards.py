@@ -7,7 +7,9 @@ from PyQt6.QtCore import QByteArray, QSize, Qt
 from PyQt6.QtGui import QColor, QCursor, QFont, QFontMetrics, QIcon, QPainter, QPen, QPixmap
 from PyQt6.QtSvg import QSvgRenderer
 from PyQt6.QtWidgets import QGraphicsDropShadowEffect
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QSizePolicy, QToolButton, QWidget
+
+from src.ui.ui_theme import TEXT, apply_fixed_policy
 
 
 def make_icon(kind: str, color: QColor, size: int = 22) -> QIcon:
@@ -110,6 +112,7 @@ class FocusTypeCard(QWidget):
         self.setObjectName("FocusTypeCard")
         self.setFixedHeight(104)
         self.setFixedWidth(290)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setMouseTracking(True)
         self._shadow = QGraphicsDropShadowEffect(self)
         self._shadow.setBlurRadius(18)
@@ -139,7 +142,7 @@ class FocusTypeCard(QWidget):
             root.addWidget(avatar, 0, Qt.AlignmentFlag.AlignVCenter)
 
         self.label = QLabel(self._focus_type, self)
-        self.label.setStyleSheet("font-size: 18px; font-weight: 750; background: transparent; color: rgba(0,0,0,0.86);")
+        self.label.setStyleSheet(f"font-size: 15px; font-weight: 650; background: transparent; color: {TEXT};")
         self.label.setAlignment(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft)
         root.addWidget(self.label, 1)
 
@@ -171,9 +174,10 @@ class FocusTypeCard(QWidget):
                         svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 16h10l1-16"/></svg>'
                     b.setIcon(_svg_icon(svg, 32))
                     b.setIconSize(QSize(28, 28))
-                b.setFixedSize(48, 48)
+                apply_fixed_policy(b, 36)
+                b.setFixedWidth(36)
                 b.setStyleSheet(
-                    "QToolButton { border: 0; padding: 10px; border-radius: 18px; background: transparent; }"
+                    "QToolButton { border: 0; padding: 6px; border-radius: 10px; background: transparent; }"
                     f"QToolButton:hover {{ background: {btn_bg}; }}"
                     f"QToolButton:pressed {{ background: {btn_bg_hover}; }}"
                 )
@@ -227,28 +231,28 @@ class FocusTypeCard(QWidget):
         base = QColor(self._color_hex) if QColor(self._color_hex).isValid() else QColor("#4F46E5")
         r, g, b = base.red(), base.green(), base.blue()
         if self._selected:
-            bg_a = 0.20
+            bg_a = 0.12
             border_a = 0.70
             border_w = 2
-            shadow_alpha = 38
-            shadow_blur = 26
-            shadow_offset = 12
+            shadow_alpha = 26
+            shadow_blur = 20
+            shadow_offset = 8
             text_alpha = 0.92
         elif hover:
-            bg_a = 0.14
-            border_a = 0.38
+            bg_a = 0.08
+            border_a = 0.26
             border_w = 1
-            shadow_alpha = 26
-            shadow_blur = 22
-            shadow_offset = 10
+            shadow_alpha = 18
+            shadow_blur = 16
+            shadow_offset = 6
             text_alpha = 0.88
         else:
-            bg_a = 0.10
-            border_a = 0.22
+            bg_a = 0.04
+            border_a = 0.14
             border_w = 1
-            shadow_alpha = 14
-            shadow_blur = 18
-            shadow_offset = 8
+            shadow_alpha = 10
+            shadow_blur = 12
+            shadow_offset = 4
             text_alpha = 0.86
 
         self._bg = QColor(r, g, b, int(bg_a * 255))

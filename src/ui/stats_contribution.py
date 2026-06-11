@@ -7,6 +7,8 @@ from PyQt6.QtCore import QMargins, QTimer, QSize, Qt
 from PyQt6.QtGui import QColor, QCursor, QPainter, QPen
 from PyQt6.QtWidgets import QLabel, QStackedWidget, QToolTip, QVBoxLayout, QWidget
 
+from src.ui.ui_theme import SUCCESS, TEXT, apply_fixed_policy, apply_panel_policy
+
 
 class YearContributionChart(QWidget):
     def __init__(self, parent=None):
@@ -14,16 +16,16 @@ class YearContributionChart(QWidget):
         self._year = date.today().year
         self._counts_by_day: dict[str, int] = {}
         self.setMinimumHeight(190)
-        self.setStyleSheet(
-            "YearContributionChart { background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.08); border-radius: 14px; }"
-        )
+        apply_panel_policy(self, 190)
+        self.setStyleSheet("YearContributionChart { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 18px; }")
 
         root = QVBoxLayout(self)
         root.setContentsMargins(10, 10, 10, 10)
         root.setSpacing(8)
 
         self._title_label = QLabel(self)
-        self._title_label.setStyleSheet("font-size: 15px; font-weight: 700; color: rgba(0,0,0,0.86);")
+        apply_fixed_policy(self._title_label, 28)
+        self._title_label.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {TEXT};")
 
         self._chart = QChart()
         legend = self._chart.legend()
@@ -96,10 +98,10 @@ class YearContributionChart(QWidget):
 
         palette = [
             QColor(0, 0, 0, 18),
-            QColor(16, 185, 129, 80),
-            QColor(16, 185, 129, 120),
-            QColor(16, 185, 129, 160),
-            QColor(16, 185, 129, 210),
+            QColor(SUCCESS).lighter(170),
+            QColor(SUCCESS).lighter(140),
+            QColor(SUCCESS),
+            QColor(SUCCESS).darker(110),
         ]
 
         def level_for(v: int) -> int:

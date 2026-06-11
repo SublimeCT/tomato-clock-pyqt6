@@ -15,6 +15,10 @@ class EngineState:
     running: bool
     time_str: str
     focus_type: str
+    remaining_seconds: int
+    total_seconds: int
+    completed_focus_count: int
+    long_break_every: int
 
 
 @dataclass(frozen=True)
@@ -47,11 +51,22 @@ class PomodoroEngine(QObject):
         self._emit_state()
 
     def state(self) -> EngineState:
+        total_seconds = (
+            self._settings.focus_minutes() * 60
+            if self._phase == "focus"
+            else self._settings.short_break_minutes() * 60
+            if self._phase == "short_break"
+            else self._settings.long_break_minutes() * 60
+        )
         return EngineState(
             phase=self._phase,
             running=self._running,
             time_str=self._duration.toString("mm:ss"),
             focus_type=self._focus_type,
+            remaining_seconds=QTime(0, 0, 0).secsTo(self._duration),
+            total_seconds=int(total_seconds),
+            completed_focus_count=int(self._completed_focus_count),
+            long_break_every=int(self._settings.long_break_every()),
         )
 
     def set_focus_type(self, focus_type: str) -> None:
