@@ -8,7 +8,8 @@ from src.ui.bottom_nav import BottomNavBar
 from src.ui.focus_page import FocusPage
 from src.ui.settings_page import SettingsPage
 from src.ui.stats_page import StatsPage
-from src.ui.ui_theme import BG
+from src.ui.template_page import TemplatePage
+from src.ui.ui_theme import BG, macos_scrollbar_qss
 
 
 class MainWindow(QMainWindow):
@@ -23,6 +24,7 @@ class MainWindow(QMainWindow):
         self.resize(680, 820)
         self.setStyleSheet(
             f"QMainWindow {{ background: {BG}; }}"
+            + macos_scrollbar_qss()
         )
 
         self.focus_page = FocusPage(
@@ -32,16 +34,18 @@ class MainWindow(QMainWindow):
             on_open_focus_duration_settings=self.open_focus_duration_settings,
         )
         self.stats_page = StatsPage(sessions=self._sessions)
+        self.template_page = TemplatePage(settings=self._settings)
         self.settings_page = SettingsPage(engine=self._engine, settings=self._settings)
 
         self.pages = QStackedWidget(self)
         self.pages.setStyleSheet("QStackedWidget { background: transparent; }")
         self.pages.addWidget(self.focus_page)
         self.pages.addWidget(self.stats_page)
+        self.pages.addWidget(self.template_page)
         self.pages.addWidget(self.settings_page)
 
         self.bottom_nav = BottomNavBar(self)
-        self.bottom_nav.set_items(["专注", "统计", "设置"])
+        self.bottom_nav.set_items(["专注", "统计", "模板", "设置"])
         self.bottom_nav.current_changed.connect(self.pages.setCurrentIndex)
         self.bottom_nav.set_current_index(0)
 
@@ -56,6 +60,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         self._engine.focus_completed.connect(self.stats_page.refresh)
+        self.template_page.templates_changed.connect(self.focus_page.reload_templates)
 
     def show_focus(self) -> None:
         self.bottom_nav.set_current_index(0)
@@ -65,16 +70,16 @@ class MainWindow(QMainWindow):
         self.activateWindow()
 
     def open_focus_type_settings(self) -> None:
-        self.bottom_nav.set_current_index(2)
-        self.pages.setCurrentIndex(2)
+        self.bottom_nav.set_current_index(3)
+        self.pages.setCurrentIndex(3)
         self.show()
         self.raise_()
         self.activateWindow()
         self.settings_page.open_focus_type_manager()
 
     def open_focus_duration_settings(self) -> None:
-        self.bottom_nav.set_current_index(2)
-        self.pages.setCurrentIndex(2)
+        self.bottom_nav.set_current_index(3)
+        self.pages.setCurrentIndex(3)
         self.show()
         self.raise_()
         self.activateWindow()

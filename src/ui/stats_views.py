@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date
 
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QAbstractScrollArea, QGridLayout, QHBoxLayout, QLabel, QPushButton, QScrollArea, QSizePolicy, QVBoxLayout, QWidget
 
 from src.ui.stats_common import BarPoint, ColumnBarChartWidget, HeatmapWidget
-from src.ui.ui_theme import ACCENT, BG, BORDER, MUTED, SUCCESS, TEXT, apply_fixed_policy, apply_panel_policy, rgba
+from src.ui.ui_theme import ACCENT, BG, BORDER, MUTED, SUCCESS, TEXT, TEXT_SECONDARY, apply_fixed_policy, apply_panel_policy, rgba
 
 
 class _NavPanel(QWidget):
@@ -41,7 +42,18 @@ class _NavPanel(QWidget):
         header.addStretch(1)
         header.addLayout(nav)
         root.addLayout(header)
-        self.body_layout = root
+        self.body_scroll = QScrollArea(self)
+        self.body_scroll.setWidgetResizable(True)
+        self.body_scroll.setFrameShape(QAbstractScrollArea.Shape.NoFrame)
+        self.body_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.body_scroll.setStyleSheet("QScrollArea { background: transparent; }")
+        self.body_widget = QWidget(self.body_scroll)
+        self.body_layout = QVBoxLayout(self.body_widget)
+        self.body_layout.setContentsMargins(0, 0, 0, 0)
+        self.body_layout.setSpacing(16)
+        self.body_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.body_scroll.setWidget(self.body_widget)
+        root.addWidget(self.body_scroll, 1)
 
     def _nav_button(self, text: str) -> QPushButton:
         btn = QPushButton(text, self)
@@ -61,12 +73,15 @@ class DayStatsPanel(_NavPanel):
         super().__init__("今日专注时段", parent)
         self.chart = ColumnBarChartWidget(self)
         self.chart.setMinimumHeight(208)
-        self.body_layout.addWidget(self.chart, 1)
+        self.timeline = DayTimelineWidget(self)
+        self.body_layout.addWidget(self.chart, 0)
+        self.body_layout.addWidget(self.timeline, 0)
 
-    def set_data(self, current_date: date, points: list[BarPoint], can_go_next: bool) -> None:
+    def set_data(self, current_date: date, points: list[BarPoint], items: list["SessionTimelineItem"], can_go_next: bool) -> None:
         self.range_label.setText(f"{current_date.year}年{current_date.month}月{current_date.day}日")
         self.next_btn.setEnabled(bool(can_go_next))
         self.chart.set_points(points)
+        self.timeline.set_items(items)
 
 
 class WeekStatsPanel(_NavPanel):
@@ -74,7 +89,7 @@ class WeekStatsPanel(_NavPanel):
         super().__init__("本周专注", parent)
         self.chart = ColumnBarChartWidget(self)
         self.chart.setMinimumHeight(208)
-        self.body_layout.addWidget(self.chart, 1)
+        self.body_layout.addWidget(self.chart, 0)
 
     def set_data(self, start_day: date, end_day: date, points: list[BarPoint], can_go_next: bool) -> None:
         self.range_label.setText(f"{start_day.month}月{start_day.day}日 - {end_day.month}月{end_day.day}日")
@@ -106,7 +121,7 @@ class MonthStatsPanel(_NavPanel):
         self.chart = ColumnBarChartWidget(self)
         self.chart.setMinimumHeight(220)
         self.body_layout.addWidget(self.chart_title, 0)
-        self.body_layout.addWidget(self.chart, 1)
+        self.body_layout.addWidget(self.chart, 0)
 
     def set_data(
         self,
@@ -141,6 +156,7 @@ class YearStatsPanel(_NavPanel):
     def __init__(self, parent=None):
         super().__init__("年度热力图", parent)
         self.heatmap = HeatmapWidget(self)
+        self.heatmap.setMinimumHeight(108)
         legend_row = QWidget(self)
         legend_layout = QHBoxLayout(legend_row)
         legend_layout.setContentsMargins(0, 0, 0, 0)
@@ -164,3 +180,109 @@ class YearStatsPanel(_NavPanel):
         self.range_label.setText(f"{year}年")
         self.next_btn.setEnabled(bool(can_go_next))
         self.heatmap.set_data(year, counts)
+
+
+@dataclass(frozen=True)
+class SessionTimelineItem:
+    time_range: str
+    title: str
+    minutes: int
+    template_name: str
+    color_hex: str
+
+
+class DayTimelineWidget(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 4, 0, 0)
+        root.setSpacing(12)
+        self.title_label = QLabel("今日记录", self)
+        self.title_label.setStyleSheet(f"color: {TEXT}; font-size: 14px; font-weight: 600; background: transparent;")
+        self.list_wrap = QWidget(self)
+        self.list_layout = QVBoxLayout(self.list_wrap)
+        self.list_layout.setContentsMargins(0, 0, 0, 0)
+        self.list_layout.setSpacing(0)
+        root.addWidget(self.title_label)
+        root.addWidget(self.list_wrap)
+
+    def set_items(self, items: list[SessionTimelineItem]) -> None:
+        while self.list_layout.count():
+            item = self.list_layout.takeAt(0)
+            widget = item.widget() if item is not None else None
+            if widget is not None:
+                widget.deleteLater()
+        if not items:
+            empty = QLabel("当天还没有完成的专注记录", self.list_wrap)
+            apply_fixed_policy(empty, 72)
+            empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            empty.setStyleSheet(
+                f"background: {rgba(BG, 0.65)}; border: 1px dashed {BORDER}; border-radius: 14px; color: {MUTED}; font-size: 13px;"
+            )
+            self.list_layout.addWidget(empty)
+            self.list_layout.addStretch(1)
+            return
+        for index, session in enumerate(items):
+            row = QWidget(self.list_wrap)
+            row.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+            layout = QHBoxLayout(row)
+            layout.setContentsMargins(0, 0, 0, 20 if index < len(items) - 1 else 0)
+            layout.setSpacing(14)
+            rail = QWidget(row)
+            rail.setFixedWidth(16)
+            rail_layout = QVBoxLayout(rail)
+            rail_layout.setContentsMargins(0, 4, 0, 0)
+            rail_layout.setSpacing(4)
+            dot = QLabel(rail)
+            dot.setFixedSize(10, 10)
+            dot.setStyleSheet(f"background: {session.color_hex}; border-radius: 5px;")
+            rail_layout.addWidget(dot, 0, Qt.AlignmentFlag.AlignHCenter)
+            if index < len(items) - 1:
+                line = QLabel(rail)
+                line.setFixedWidth(2)
+                line.setStyleSheet(f"background: {BORDER}; border-radius: 1px;")
+                line.setFixedHeight(54)
+                rail_layout.addWidget(line, 1, Qt.AlignmentFlag.AlignHCenter)
+            else:
+                rail_layout.addStretch(1)
+            body = QWidget(row)
+            body_layout = QVBoxLayout(body)
+            body_layout.setContentsMargins(0, 0, 0, 0)
+            body_layout.setSpacing(0)
+            time_label = QLabel(session.time_range, body)
+            time_label.setStyleSheet(f"color: {MUTED}; font-size: 12px; font-weight: 550;")
+            title_row = QHBoxLayout()
+            title_row.setContentsMargins(0, 0, 0, 0)
+            title_row.setSpacing(6)
+            title_label = QLabel(session.title, body)
+            title_label.setStyleSheet(f"color: {TEXT}; font-size: 15px; font-weight: 600;")
+            title_row.addWidget(title_label, 0)
+            if session.template_name:
+                tag = QWidget(body)
+                tag_row = QHBoxLayout(tag)
+                tag_row.setContentsMargins(8, 2, 8, 2)
+                tag_row.setSpacing(4)
+                tag_dot = QLabel(tag)
+                tag_dot.setFixedSize(6, 6)
+                tag_dot.setStyleSheet(f"background: {session.color_hex}; border-radius: 3px;")
+                tag_text = QLabel(session.template_name, tag)
+                tag_text.setStyleSheet(f"color: {session.color_hex}; font-size: 11px; font-weight: 550; background: transparent;")
+                tag.setStyleSheet(
+                    f"background: {rgba(session.color_hex, 0.10)}; color: {session.color_hex};"
+                    "border-radius: 10px;"
+                )
+                tag_row.addWidget(tag_dot, 0, Qt.AlignmentFlag.AlignVCenter)
+                tag_row.addWidget(tag_text, 0)
+                title_row.addWidget(tag, 0)
+            title_row.addStretch(1)
+            meta = QLabel(f"专注 {session.minutes} 分钟", body)
+            meta.setStyleSheet(f"color: {TEXT_SECONDARY}; font-size: 13px; background: transparent;")
+            title_wrap = QWidget(body)
+            title_wrap.setLayout(title_row)
+            body_layout.addWidget(time_label)
+            body_layout.addWidget(title_wrap)
+            body_layout.addWidget(meta)
+            layout.addWidget(rail, 0)
+            layout.addWidget(body, 1)
+            self.list_layout.addWidget(row)
+        self.list_layout.addStretch(1)

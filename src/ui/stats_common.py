@@ -142,7 +142,7 @@ class HeatmapWidget(QWidget):
         self._year = date.today().year
         self._counts: dict[str, int] = {}
         self.setMouseTracking(True)
-        self.setMinimumHeight(88)
+        self.setMinimumHeight(108)
 
     def set_data(self, year: int, counts: dict[str, int]) -> None:
         self._year = int(year)
@@ -214,7 +214,7 @@ class HeatmapWidget(QWidget):
         columns = 53
         gap = 1
         available = max(240, self.width() - ((columns - 1) * gap))
-        cell = max(3, min(7, int(available / columns)))
+        cell = max(4, min(8, int(available / columns)))
         return cell, gap
 
 

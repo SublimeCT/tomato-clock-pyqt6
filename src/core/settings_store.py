@@ -4,9 +4,15 @@ import json
 from typing import Iterable
 
 from PyQt6.QtCore import QSettings
+from src.core.settings_mixins import PromptSettingsMixin, TemplateSettingsMixin
+from src.core.settings_models import (
+    DEFAULT_BREAK_END_PROMPT,
+    DEFAULT_FOCUS_END_PROMPT,
+    default_templates,
+)
 
 
-class SettingsStore:
+class SettingsStore(PromptSettingsMixin, TemplateSettingsMixin):
     def __init__(self):
         self._settings = QSettings("tomato-clock", "tomato-clock-pyqt6")
         self._default_focus_types = ["学习", "阅读", "健身", "工作", "专注", "冥想", "烹饪", "瑜伽"]
@@ -20,6 +26,9 @@ class SettingsStore:
             "烹饪": "#F59E0B",
             "瑜伽": "#EC4899",
         }
+        self._default_focus_end_prompt = DEFAULT_FOCUS_END_PROMPT
+        self._default_break_end_prompt = DEFAULT_BREAK_END_PROMPT
+        self._default_templates = default_templates()
 
     def builtin_focus_types(self) -> list[str]:
         return list(self._default_focus_types)
@@ -183,3 +192,14 @@ class SettingsStore:
 
     def set_default_focus_type(self, focus_type: str) -> None:
         self._settings.setValue("focus/default_type", str(focus_type))
+
+    def _save_json(self, key: str, payload: object) -> None:
+        self._settings.setValue(key, json.dumps(payload, ensure_ascii=False))
+
+    def _load_json_value(self, raw: object) -> object:
+        if not isinstance(raw, str) or not raw.strip():
+            return None
+        try:
+            return json.loads(raw)
+        except Exception:
+            return None

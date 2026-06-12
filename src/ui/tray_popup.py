@@ -31,10 +31,9 @@ class TrayPopup(QWidget):
             | Qt.WindowType.Tool
         )
         self.setFixedSize(320, 156)
-        self._accent = QColor()
-        self._accent.setNamedColor("#4F46E5")
-        self._bg0 = QColor(BG)
-        self._bg1 = QColor("#FFF8F3")
+        self._accent = self._qcolor("#4F46E5")
+        self._bg0 = self._qcolor(BG)
+        self._bg1 = self._qcolor("#FFF8F3")
         self._corner_radius = 18
         self._anim: QPropertyAnimation | None = None
         self._hiding = False
@@ -77,8 +76,8 @@ class TrayPopup(QWidget):
         self.quit_button.clicked.connect(self._handle_quit)
 
         self.toggle_button.setIcon(self._icon_for_toggle(running=False))
-        self.open_main_button.setIcon(self._standard_icon(QStyle.StandardPixmap.SP_ComputerIcon))
-        self.quit_button.setIcon(self._standard_icon(QStyle.StandardPixmap.SP_DialogCloseButton))
+        self.open_main_button.setIcon(self._standard_icon(QStyle.StandardPixmap.SP_TitleBarNormalButton))
+        self.quit_button.setIcon(self._standard_icon(QStyle.StandardPixmap.SP_TitleBarCloseButton))
         for btn in (self.toggle_button, self.open_main_button, self.quit_button):
             btn.setIconSize(QSize(16, 16))
 
@@ -98,8 +97,7 @@ class TrayPopup(QWidget):
     def set_focus_type_text(self, text: str, *, color_hex: str | None = None) -> None:
         self.type_pill.setText(str(text))
         if isinstance(color_hex, str) and color_hex.startswith("#"):
-            c = QColor()
-            c.setNamedColor(color_hex)
+            c = self._qcolor(color_hex)
             if c.isValid():
                 self._accent = QColor(c)
                 self._apply_theme()
@@ -167,7 +165,7 @@ class TrayPopup(QWidget):
         b = int(self._accent.blue())
         accent_hex = self._accent.name()
         btn_bg = accent_hex
-        btn_bg_hover = QColor(accent_hex).darker(108).name()
+        btn_bg_hover = self._qcolor(accent_hex).darker(108).name()
         pill_bg_hex, pill_bd_hex, pill_text = type_colors(accent_hex)
         self._bg1 = QColor.fromRgb(
             int(round(255 - (255 - r) * 0.10)),
@@ -254,6 +252,11 @@ class TrayPopup(QWidget):
         if running:
             return self._standard_icon(QStyle.StandardPixmap.SP_MediaPause)
         return self._standard_icon(QStyle.StandardPixmap.SP_MediaPlay)
+
+    def _qcolor(self, color_hex: str) -> QColor:
+        color = QColor(Qt.GlobalColor.transparent)
+        color.setNamedColor(str(color_hex))
+        return color
 
     def _handle_toggle(self) -> None:
         if callable(self.on_toggle):

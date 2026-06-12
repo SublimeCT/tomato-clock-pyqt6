@@ -14,6 +14,7 @@ class FocusSession:
     completed_at_iso: str
     focus_type: str
     minutes: int
+    template_name: str = ""
 
 
 class SessionStore:
@@ -42,6 +43,7 @@ class SessionStore:
                             completed_at_iso=str(item.get("completed_at_iso", "")),
                             focus_type=str(item.get("focus_type", "")),
                             minutes=int(item.get("minutes", 0)),
+                            template_name=str(item.get("template_name", "")),
                         )
                     )
                 except Exception:
@@ -52,13 +54,21 @@ class SessionStore:
         payload = [asdict(s) for s in self._sessions]
         self._path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    def add_session(self, focus_type: str, minutes: int, started_at: datetime, completed_at: datetime) -> None:
+    def add_session(
+        self,
+        focus_type: str,
+        minutes: int,
+        started_at: datetime,
+        completed_at: datetime,
+        template_name: str = "",
+    ) -> None:
         self._sessions.append(
             FocusSession(
                 started_at_iso=started_at.isoformat(timespec="seconds"),
                 completed_at_iso=completed_at.isoformat(timespec="seconds"),
                 focus_type=focus_type,
                 minutes=int(minutes),
+                template_name=str(template_name).strip(),
             )
         )
         self._save()

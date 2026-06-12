@@ -16,17 +16,14 @@ class SessionDotsWidget(QWidget):
         row = QHBoxLayout(self)
         row.setContentsMargins(0, 0, 0, 0)
         row.setSpacing(8)
+        self._row = row
         self._dots: list[QLabel] = []
-        for _ in range(self._total):
-            dot = QLabel(self)
-            dot.setFixedSize(8, 8)
-            row.addWidget(dot, 0, Qt.AlignmentFlag.AlignCenter)
-            self._dots.append(dot)
         self.set_progress(0, 4)
 
     def set_progress(self, completed: int, total: int) -> None:
         self._completed = max(0, int(completed))
         self._total = max(1, int(total))
+        self._ensure_dot_count(self._total)
         for index, dot in enumerate(self._dots):
             if index < self._completed:
                 dot.setStyleSheet(f"background: {ACCENT}; border-radius: 4px;")
@@ -34,6 +31,17 @@ class SessionDotsWidget(QWidget):
                 dot.setStyleSheet(f"background: {ACCENT}; border-radius: 4px; border: 3px solid rgba(230,57,70,0.10);")
             else:
                 dot.setStyleSheet("background: #E8E0D8; border-radius: 4px;")
+
+    def _ensure_dot_count(self, total: int) -> None:
+        while len(self._dots) < total:
+            dot = QLabel(self)
+            dot.setFixedSize(8, 8)
+            self._row.addWidget(dot, 0, Qt.AlignmentFlag.AlignCenter)
+            self._dots.append(dot)
+        while len(self._dots) > total:
+            dot = self._dots.pop()
+            self._row.removeWidget(dot)
+            dot.deleteLater()
 
 
 class TimerRingWidget(QWidget):

@@ -160,16 +160,7 @@ class TrayController:
     def _on_phase_finished(self, event: PhaseFinishedEvent) -> None:
         QApplication.beep()
         QTimer.singleShot(180, QApplication.beep)
-        if event.finished_phase == "focus":
-            if event.next_phase == "short_break":
-                msg = f"专注结束：{event.focus_type}，开始短休息"
-            elif event.next_phase == "long_break":
-                msg = f"专注结束：{event.focus_type}，开始长休息"
-            else:
-                msg = "专注结束"
-        else:
-            msg = "休息结束，开始专注"
-        self._show_system_notification("番茄专注", msg)
+        self._show_system_notification("番茄专注", event.prompt_message)
 
     def _show_system_notification(self, title: str, message: str) -> None:
         title = str(title)

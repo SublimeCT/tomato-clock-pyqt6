@@ -5,9 +5,9 @@ from datetime import date, datetime, timedelta
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractScrollArea, QHBoxLayout, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
 
-from src.core.session_store import SessionStore
+from src.core.session_store import FocusSession, SessionStore
 from src.ui.stats_common import BarPoint, StatsModeBar, make_card
-from src.ui.stats_views import DayStatsPanel, MonthStatsPanel, WeekStatsPanel, YearStatsPanel
+from src.ui.stats_views import DayStatsPanel, MonthStatsPanel, SessionTimelineItem, WeekStatsPanel, YearStatsPanel
 from src.ui.ui_theme import ACCENT, SUCCESS, WARN
 
 
@@ -122,21 +122,35 @@ class StatsPage(QWidget):
         end_hour = 23
         if self._selected_date == self._today:
             end_hour = int(datetime.now().hour)
+        day_sessions: list[tuple[datetime, datetime, FocusSession]] = []
         minutes_by_hour = {h: 0 for h in range(end_hour + 1)}
         for s in self._sessions.sessions_on(self._selected_date):
             try:
                 started = datetime.fromisoformat(s.started_at_iso)
+                completed = datetime.fromisoformat(s.completed_at_iso)
             except Exception:
                 continue
             h = int(started.hour)
             if h > end_hour:
                 continue
             minutes_by_hour[h] += int(s.minutes)
+            day_sessions.append((started, completed, s))
         points: list[BarPoint] = []
         current_hour = int(datetime.now().hour) if self._selected_date == self._today else -1
         for h in range(end_hour + 1):
             points.append(BarPoint(label=str(h), value=minutes_by_hour.get(h, 0), hint=f"{h}点\n时长: {minutes_by_hour.get(h, 0)} 分钟", accent=h == current_hour))
-        self.day_view.set_data(self._selected_date, points, self._selected_date < self._today)
+        colors = self._sessions_on_day_colors(day_sessions)
+        items = [
+            SessionTimelineItem(
+                time_range=f"{started.strftime('%H:%M')} ~ {completed.strftime('%H:%M')}",
+                title=str(session.focus_type),
+                minutes=int(session.minutes),
+                template_name=str(getattr(session, "template_name", "")).strip(),
+                color_hex=colors.get(str(session.focus_type), "#4F46E5"),
+            )
+            for started, completed, session in sorted(day_sessions, key=lambda item: item[0])
+        ]
+        self.day_view.set_data(self._selected_date, points, items, self._selected_date < self._today)
 
     def _refresh_week(self) -> None:
         start = self._selected_date - timedelta(days=self._selected_date.weekday())
@@ -255,3 +269,20 @@ class StatsPage(QWidget):
         if self._selected_year == self._today.year and self._selected_month > self._today.month:
             self._selected_month = self._today.month
         self._refresh_current_view()
+
+    def _sessions_on_day_colors(self, day_sessions: list[tuple[datetime, datetime, FocusSession]]) -> dict[str, str]:
+        colors = {
+            "学习": "#4F46E5",
+            "阅读": "#10B981",
+            "健身": "#F97316",
+            "工作": "#0EA5E9",
+            "专注": "#7C3AED",
+            "冥想": "#14B8A6",
+            "烹饪": "#F59E0B",
+            "瑜伽": "#EC4899",
+        }
+        for _started, _completed, session in day_sessions:
+            focus_type = str(getattr(session, "focus_type", "")).strip()
+            if focus_type and focus_type not in colors:
+                colors[focus_type] = "#4F46E5"
+        return colors

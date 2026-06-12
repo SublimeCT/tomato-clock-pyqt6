@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import QDesktopServices
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 from src.app_metadata import get_app_metadata
 from src.core.pomodoro_engine import PomodoroEngine
 from src.core.settings_store import SettingsStore
 from src.ui.focus_type_dialog import FocusTypeDialog
 from src.ui.settings_controls import StepperControl
+from src.ui.settings_prompt_panel import PromptSettingsPanel
 from src.ui.ui_theme import BG, BORDER, MUTED, SUCCESS, TEXT, apply_fixed_policy, apply_panel_policy, rgba
 from src.utils.icon_loader import load_app_icon
 
@@ -81,6 +82,8 @@ class SettingsPage(QWidget):
         type_layout.addWidget(manage_btn, 0)
         focus_type_layout.addWidget(type_row)
 
+        prompts = PromptSettingsPanel(self._settings, self)
+
         about = self._build_section("")
         about_row = QWidget(self)
         apply_fixed_policy(about_row, 104)
@@ -115,9 +118,15 @@ class SettingsPage(QWidget):
 
         body_layout.addWidget(durations)
         body_layout.addWidget(focus_type)
+        body_layout.addWidget(prompts)
         body_layout.addWidget(about)
         body_layout.addStretch(1)
-        root.addWidget(body, 1)
+        scroll = QScrollArea(self)
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll.setWidget(body)
+        root.addWidget(scroll, 1)
 
     def _build_section(self, title: str) -> QWidget:
         section = QWidget(self)

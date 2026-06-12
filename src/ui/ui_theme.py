@@ -54,3 +54,19 @@ def type_colors(color_hex: str) -> tuple[str, str, str]:
         f"rgba({base.red()},{base.green()},{base.blue()},58)",
         base.name(),
     )
+
+
+def macos_scrollbar_qss() -> str:
+    """Return a subtle scrollbar style that approximates macOS overlay bars."""
+    return (
+        "QScrollBar:vertical { background: transparent; width: 10px; margin: 2px 2px 2px 0; border: none; }"
+        "QScrollBar::handle:vertical { background: rgba(60,60,67,0.28); min-height: 32px; border-radius: 5px; border: none; }"
+        "QScrollBar::handle:vertical:hover { background: rgba(60,60,67,0.40); }"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; border: none; background: transparent; }"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; border: none; }"
+        "QScrollBar:horizontal { background: transparent; height: 10px; margin: 0 2px 2px 2px; border: none; }"
+        "QScrollBar::handle:horizontal { background: rgba(60,60,67,0.28); min-width: 32px; border-radius: 5px; border: none; }"
+        "QScrollBar::handle:horizontal:hover { background: rgba(60,60,67,0.40); }"
+        "QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; border: none; background: transparent; }"
+        "QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; border: none; }"
+    )
