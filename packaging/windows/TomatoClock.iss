@@ -2,6 +2,9 @@
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
+#ifndef RepoRoot
+  #define RepoRoot "."
+#endif
 #ifndef SourceDir
   #define SourceDir "dist\TomatoClock"
 #endif
@@ -22,7 +25,7 @@ OutputBaseFilename=TomatoClock-Setup-{#AppVersion}-Windows
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern
-SetupIconFile=icon.ico
+SetupIconFile={#RepoRoot}\icon.ico
 UninstallDisplayIcon={app}\TomatoClock.exe
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible

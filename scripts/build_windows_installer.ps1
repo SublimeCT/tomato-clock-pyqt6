@@ -28,11 +28,15 @@ uv run pyinstaller `
 
 & $iscc `
     "/DAppVersion=$version" `
+    "/DRepoRoot=$root" `
     "/DSourceDir=$($root)\dist\TomatoClock" `
     "/O$($root)\dist" `
     "$($root)\packaging\windows\TomatoClock.iss"
 
 $installer = Join-Path $root "dist\TomatoClock-Setup-$version-Windows.exe"
+if (-not (Test-Path $installer)) {
+    throw "未生成预期的安装器文件: $installer"
+}
 $hash = Get-FileHash -Algorithm SHA256 $installer
 "$($hash.Hash.ToLower())  $(Split-Path $installer -Leaf)" | Set-Content "$installer.sha256"
 Write-Host "Created $installer"

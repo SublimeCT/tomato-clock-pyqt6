@@ -5,5 +5,5 @@ Comment=Simple pomodoro timer built with PyQt6
 Exec=TomatoClock
 Icon=TomatoClock
 Terminal=false
-Categories=Office;Utility;Productivity;
+Categories=Utility;
 StartupNotify=true

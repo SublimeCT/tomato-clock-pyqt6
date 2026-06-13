@@ -23,7 +23,7 @@ a = Analysis(
     ['src/main.py'],
     pathex=[],
     binaries=[],
-    datas=[('pyproject.toml', '.'), ('icon.icns', '.')],
+    datas=[('pyproject.toml', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
