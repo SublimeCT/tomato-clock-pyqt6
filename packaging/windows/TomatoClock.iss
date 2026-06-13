@@ -1,4 +1,5 @@
 #define AppName "TomatoClock"
+#define AppUserModelID "SublimeCT.TomatoClock"
 #ifndef AppVersion
   #define AppVersion "0.0.0"
 #endif
@@ -43,8 +44,8 @@ Name: "desktopicon"; Description: "Create a desktop shortcut"; GroupDescription:
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\TomatoClock.exe"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\TomatoClock.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\TomatoClock.exe"; AppUserModelID: "{#AppUserModelID}"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\TomatoClock.exe"; Tasks: desktopicon; AppUserModelID: "{#AppUserModelID}"
 
 [Run]
 Filename: "{app}\TomatoClock.exe"; Description: "Launch {#AppName}"; Flags: nowait postinstall skipifsilent

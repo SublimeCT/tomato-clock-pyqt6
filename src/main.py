@@ -11,6 +11,7 @@ from src.core.settings_store import SettingsStore
 from src.tray.tray_controller import TrayController
 from src.ui.main_window import MainWindow
 from src.utils.icon_loader import load_app_icon
+from src.utils.windows_notification import configure_windows_app_id
 
 from src.assets import resources_rc as _resources_rc
 
@@ -26,6 +27,7 @@ if __name__ == "__main__":
     app.setOrganizationDomain(app_metadata.organization_domain)
     app.setDesktopFileName(app_metadata.desktop_file_name)
     app.setQuitOnLastWindowClosed(False)
+    configure_windows_app_id()
 
     app_icon = load_app_icon("app-icon-44.png")
     app.setWindowIcon(app_icon)
