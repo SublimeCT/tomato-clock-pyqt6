@@ -288,7 +288,7 @@ wheels = [
 
 [[package]]
 name = "tomato-clock-pyqt6"
-version = "2.1.1"
+version = "2.2.0"
 source = { editable = "." }
 dependencies = [
     { name = "pyobjc-core", marker = "sys_platform == 'darwin'" },

@@ -4,6 +4,7 @@ from typing import Callable
 
 from PyQt6.QtCore import (
     QEasingCurve,
+    QEvent,
     QPoint,
     QPointF,
     QPropertyAnimation,
@@ -12,7 +13,8 @@ from PyQt6.QtCore import (
     Qt,
 )
 from PyQt6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPainterPath, QPen, QRegion
-from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QStyle, QVBoxLayout, QWidget
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QStyle, QVBoxLayout, QWidget
 
 from src.ui.ui_theme import ACCENT, BG, BORDER, TEXT, apply_fixed_policy, rgba, type_colors
 
@@ -37,6 +39,7 @@ class TrayPopup(QWidget):
         self._corner_radius = 18
         self._anim: QPropertyAnimation | None = None
         self._hiding = False
+        self._event_filter_installed = False
         self._update_mask()
 
         root = QVBoxLayout(self)
@@ -110,6 +113,19 @@ class TrayPopup(QWidget):
         self.hide_animated()
         super().focusOutEvent(event)
 
+    def eventFilter(self, watched, event) -> bool:
+        if not self.isVisible():
+            return super().eventFilter(watched, event)
+        if event.type() == QEvent.Type.ApplicationDeactivate:
+            self.hide_animated()
+            return False
+        if event.type() == QEvent.Type.MouseButtonPress and isinstance(event, QMouseEvent):
+            global_pos = event.globalPosition().toPoint()
+            local_pos = self.mapFromGlobal(global_pos)
+            if not self.rect().contains(local_pos):
+                self.hide_animated()
+        return super().eventFilter(watched, event)
+
     def resizeEvent(self, event) -> None:
         self._update_mask()
         super().resizeEvent(event)
@@ -117,6 +133,7 @@ class TrayPopup(QWidget):
     def show_at(self, pos: QPoint) -> None:
         self._hiding = False
         self._stop_anim()
+        self._ensure_app_event_filter()
         end_pos = QPoint(int(pos.x()), int(pos.y()))
         start_pos = QPoint(end_pos.x(), end_pos.y() + 10)
         self.move(start_pos)
@@ -232,6 +249,13 @@ class TrayPopup(QWidget):
             self._anim.stop()
             self._anim.deleteLater()
             self._anim = None
+
+    def _ensure_app_event_filter(self) -> None:
+        app = QApplication.instance()
+        if app is None or self._event_filter_installed:
+            return
+        app.installEventFilter(self)
+        self._event_filter_installed = True
 
     def _clear_anim(self) -> None:
         sender = self.sender()
