@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.sublimect.tomatoclock</id>
+  <name>TomatoClock</name>
+  <summary>Simple pomodoro timer built with PyQt6</summary>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>A lightweight desktop pomodoro timer with templates, statistics and tray controls.</p>
+  </description>
+  <launchable type="desktop-id">TomatoClock.desktop</launchable>
+  <provides>
+    <binary>TomatoClock</binary>
+  </provides>
+</component>

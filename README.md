@@ -32,13 +32,20 @@
 可从 [github release](https://github.com/SublimeCT/tomato-clock-pyqt6/releases) 页面下载对应的安装包进行安装, 或自行 [打包](#打包)
 
 ### Windows
-在 `zip` 格式的压缩包内, 直接运行 `TomatoClock.exe` 文件即可
+下载 `TomatoClock-Setup-<version>-Windows.exe` 安装包, 运行后会安装到当前用户目录并创建开始菜单快捷方式
 
 ### MacOS
-在 `zip` 格式的压缩包内, 直接运行 `TomatoClock.app` 文件即可
+下载 `TomatoClock-<version>-macOS.dmg`, 挂载后将 `TomatoClock.app` 拖到 `Applications` 即可
 
 ### Linux
-对于 `Ubuntu 22.04` 或更高版本, 通常执行 `TomatoClock` 文件即可, 目前并没有制作启动器文件, 以下是可能会遇到的报错:
+下载 `TomatoClock-<version>-Linux-<arch>.AppImage`, 赋予可执行权限后直接运行:
+
+```bash
+chmod +x TomatoClock-*.AppImage
+./TomatoClock-*.AppImage
+```
+
+对于 `Ubuntu 22.04` 或更高版本, 若系统缺少 `FUSE` 或 Qt 运行库, 可能会遇到以下报错:
 
 #### 缺少 qt 依赖库
 ```bash
@@ -91,39 +98,37 @@ uv run src/main.py
 本项目基于 `Github Actions` 工作流, 只需提交 `tag` 即可自动打包
 
 ```bash
-git tag add v1.0.5 && git push origin v1.0.5
+git tag v1.0.5
+git push origin v1.0.5
 ```
 
 ### 打包
 
 ```bash
 # 对于 MacOS:
-uv run pyinstaller \
-  --name TomatoClock \
-  --windowed \
-  --clean \
-  --noconfirm \
-  --add-data "pyproject.toml:." \
-  --icon icon.icns \
-  src/main.py
+chmod +x scripts/build_macos_release.sh
+./scripts/build_macos_release.sh
 
 # 对于 Windows:
-uv run pyinstaller \
-  --name TomatoClock \
-  --windowed \
-  --clean \
-  --noconfirm \
-  --add-data "pyproject.toml;." \
-  --icon icon.ico \
-  src/main.py
+pwsh ./scripts/build_windows_installer.ps1
+
+# 对于 Linux:
+chmod +x scripts/build_linux_appimage.sh
+./scripts/build_linux_appimage.sh
 ```
 
 ```bash
-# [MacOS] 打开应用, 或直接在 finder 中双击运行
+# [MacOS] 调试 onedir .app
 ./dist/TomatoClock.app/Contents/MacOS/TomatoClock
 ```
 
-本项目使用 `Github Actions` 进行构建, 具体构建命令在 `github/workflows/release.yml` 中
+正式发布产物:
+
+- Windows: `TomatoClock-Setup-<version>-Windows.exe`
+- macOS: `TomatoClock-<version>-macOS.dmg`
+- Linux: `TomatoClock-<version>-Linux-<arch>.AppImage`
+
+本项目使用 `Github Actions` 进行构建, 具体构建命令在 `.github/workflows/release.yml` 中
 
 #### 制作应用图标
 对于 `MacOS` 需要生成 `icon.iconset`:

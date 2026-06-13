@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import subprocess
 import sys
 
 from PyQt6.QtCore import QByteArray, QBuffer, QPoint, QTimer, Qt
@@ -11,7 +10,9 @@ from src.core.pomodoro_engine import EngineState, PhaseFinishedEvent, PomodoroEn
 from src.core.settings_store import SettingsStore
 from src.ui.main_window import MainWindow
 from src.ui.tray_popup import TrayPopup
+from src.utils.system_notification_fallback import show_linux_notification
 if sys.platform == "darwin":
+    from src.tray.macos_system_notification import MacSystemNotificationCenter
     from src.tray.macos_status_item import MacStatusItem
 
 
@@ -29,8 +30,10 @@ class TrayController:
 
         self._tray: QSystemTrayIcon | None = None
         self._mac_item: MacStatusItem | None = None
+        self._mac_notification: MacSystemNotificationCenter | None = None
         if self._use_macos_status_item:
             self._mac_item = MacStatusItem()
+            self._mac_notification = MacSystemNotificationCenter()
             self._mac_item.set_click_callback(self.show_popup)
             self._mac_item.set_image_scaling_proportionally_down()
             png_bytes = self._icon_to_png_bytes(self._tray_base_icon, size=18, dpr_override=1.0)
@@ -165,14 +168,24 @@ class TrayController:
     def _show_system_notification(self, title: str, message: str) -> None:
         title = str(title)
         message = str(message)
-        if sys.platform == "darwin":
-            esc = lambda s: str(s).replace("\\", "\\\\").replace('"', '\\"')
-            script = f'display notification "{esc(message)}" with title "{esc(title)}"'
-            subprocess.run(["osascript", "-e", script], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        if sys.platform == "darwin" and self._mac_notification is not None:
+            # #region debug-point E:tray-path-macos
+            import json, urllib.request; _p='.dbg/system-notification-missing.env'; _u,_s='http://127.0.0.1:7777/event','system-notification-missing'; exec("try:\n with open(_p) as f: c=f.read(); _u=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SERVER_URL=')),_u); _s=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SESSION_ID=')),_s)\nexcept: pass"); exec("try:\n urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'post-fix','hypothesisId':'E','location':'tray_controller.py:171','msg':'[DEBUG] using mac native notification path','data':{'platform':sys.platform,'has_mac_notification':bool(self._mac_notification is not None)}}).encode(), headers={'Content-Type':'application/json'})).read()\nexcept: pass")
+            # #endregion
+            self._mac_notification.show_message(title, message)
             return
 
         if self._tray is not None and QSystemTrayIcon.supportsMessages():
-            self._tray.showMessage(title, message, QSystemTrayIcon.MessageIcon.Information, 4500)
+            # #region debug-point E:tray-path-qt
+            import json, urllib.request; _p='.dbg/system-notification-missing.env'; _u,_s='http://127.0.0.1:7777/event','system-notification-missing'; exec("try:\n with open(_p) as f: c=f.read(); _u=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SERVER_URL=')),_u); _s=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SESSION_ID=')),_s)\nexcept: pass"); exec("try:\n urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'post-fix','hypothesisId':'E','location':'tray_controller.py:177','msg':'[DEBUG] using qt tray notification path','data':{'platform':sys.platform,'supports_messages':bool(QSystemTrayIcon.supportsMessages())}}).encode(), headers={'Content-Type':'application/json'})).read()\nexcept: pass")
+            # #endregion
+            self._tray.showMessage(title, message, self._app_icon, 4500)
+            return
+
+        # #region debug-point E:tray-path-linux-fallback
+        import json, urllib.request; _p='.dbg/system-notification-missing.env'; _u,_s='http://127.0.0.1:7777/event','system-notification-missing'; exec("try:\n with open(_p) as f: c=f.read(); _u=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SERVER_URL=')),_u); _s=next((l.split('=',1)[1] for l in c.split('\\n') if l.startswith('DEBUG_SESSION_ID=')),_s)\nexcept: pass"); exec("try:\n urllib.request.urlopen(urllib.request.Request(_u, data=json.dumps({'sessionId':_s,'runId':'post-fix','hypothesisId':'E','location':'tray_controller.py:183','msg':'[DEBUG] using linux fallback notification path','data':{'platform':sys.platform}}).encode(), headers={'Content-Type':'application/json'})).read()\nexcept: pass")
+        # #endregion
+        show_linux_notification(title, message)
 
     def _make_tray_color_icon(self, icon: QIcon) -> QIcon:
         size = 18

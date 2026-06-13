@@ -63,10 +63,15 @@ class _TemplateChip(QWidget):
 
     def _refresh_style(self) -> None:
         if not self.isEnabled():
+            border = ACCENT if self._checked else BORDER
+            background = rgba(ACCENT, 0.08) if self._checked else "#F6F1EB"
             self.setStyleSheet(
-                f"QWidget#TemplateChip {{ background: #F6F1EB; border: 1px solid {BORDER}; border-radius: 12px; }}"
+                f"QWidget#TemplateChip {{ background: {background}; border: 1px solid {border}; border-radius: 12px; }}"
             )
-            self._name_label.setStyleSheet("color: #9D9DA9; font-size: 13px; font-weight: 600; background: transparent;")
+            name_color = ACCENT if self._checked else "#9D9DA9"
+            self._name_label.setStyleSheet(
+                f"color: {name_color}; font-size: 13px; font-weight: 600; background: transparent;"
+            )
             self._meta_label.setStyleSheet("color: #B6B0A9; font-size: 11px; font-weight: 400; background: transparent;")
             return
         border = ACCENT if self._checked else rgba(BORDER, 0.85)

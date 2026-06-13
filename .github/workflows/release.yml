@@ -3,77 +3,136 @@ name: Build and Upload Release Assets
 on:
   push:
     tags:
-      - 'v*' # 当你在本地打上以 v 开头的标签（如 v1.0.0）并推送时，自动触发打包
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  PYINSTALLER_STRICT_COLLECT_MODE: 1
 
 jobs:
-  release:
-    name: Build Asset for ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    # 👇 关键核心：在这里添加权限声明
-    permissions:
-      contents: write  # 必须拥有运行写权限，才能创建 Release 并上传文件
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # macOS 平台配置
-          - os: macos-latest
-            platform: macos
-            artifact_path: dist/TomatoClock.app
-            output_name: TomatoClock-macOS.zip
-            command: |
-              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --strip --optimize 2 --add-data "pyproject.toml:." --icon icon.icns src/main.py
-              # macOS 的 .app 建议用 ditto 打包，兼容资源分叉且压缩率更好
-              ditto -c -k --sequesterRsrc --keepParent dist/TomatoClock.app TomatoClock-macOS.zip
-
-          # Windows 平台配置
-          - os: windows-latest
-            platform: windows
-            artifact_path: dist/TomatoClock.exe
-            output_name: TomatoClock-Windows.zip
-            command: |
-              # Windows 下没有 .icns 图标，通常使用 .ico。如果没有 icon.ico，PyInstaller 会自动忽略或报错。
-              # 这里默认兼容你的配置，若 Windows 下没有专门的 ico，可把 --icon 去掉或替换
-              uv run pyinstaller --name TomatoClock --windowed --clean --noconfirm --add-data "pyproject.toml;." --icon icon.ico src/main.py
-              powershell Compress-Archive -Path dist/TomatoClock -DestinationPath TomatoClock-Windows.zip
-
-          # Linux 平台配置
-          - os: ubuntu-22.04
-            platform: linux
-            artifact_path: dist/TomatoClock
-            output_name: TomatoClock-Linux.tar.gz
-            command: |
-              # Linux 下打包通常是无窗口/依赖系统的，直接打包成二进制文件
-              uv run pyinstaller --name TomatoClock --clean --noconfirm --add-data "pyproject.toml:." src/main.py
-              tar -czvf TomatoClock-Linux.tar.gz dist/TomatoClock
-
+  build-macos:
+    name: Build macOS DMG
+    runs-on: macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 安装并配置最新版的 uv
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-          enable-cache: true # 开启缓存，加速后续的打包
+          enable-cache: true
 
-      # 显式让 uv 寻找或安装运行所需的 Python 3.14 环境
       - name: Set up Python with uv
-        run: uv python install 3.14
+        run: uv python install 3.13
 
-      # 同步依赖。uv 会自动根据 pyproject.toml 或 uv.lock 锁定的版本进行安装（包含 pyinstaller）
       - name: Install Dependencies
-        run: uv sync
+        run: uv sync --dev
 
-      # 执行对应平台的打包命令
-      - name: Run PyInstaller Build
-        run: ${{ matrix.command }}
+      - name: Build macOS release
+        run: |
+          chmod +x scripts/build_macos_release.sh
+          ./scripts/build_macos_release.sh
 
-      # 自动创建或将文件追加到对应的 GitHub Release 中
-      - name: Upload Asset to Release
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-release
+          path: |
+            dist/*.dmg
+            dist/*.dmg.sha256
+
+  build-windows:
+    name: Build Windows Installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python with uv
+        run: uv python install 3.13
+
+      - name: Install Dependencies
+        run: uv sync --dev
+
+      - name: Install Inno Setup
+        run: choco install innosetup --no-progress -y
+
+      - name: Build Windows release
+        shell: pwsh
+        run: .\scripts\build_windows_installer.ps1
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/*-Windows.exe
+            dist/*-Windows.exe.sha256
+
+  build-linux:
+    name: Build Linux AppImage
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python with uv
+        run: uv python install 3.13
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 libxcb-cursor0
+
+      - name: Install Dependencies
+        run: uv sync --dev
+
+      - name: Build Linux release
+        run: |
+          chmod +x scripts/build_linux_appimage.sh packaging/linux/AppRun
+          ./scripts/build_linux_appimage.sh
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-release
+          path: |
+            dist/*.AppImage
+            dist/*.AppImage.sha256
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - build-macos
+      - build-windows
+      - build-linux
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+
+      - name: Publish release assets
         uses: softprops/action-gh-release@v2
         with:
-          files: ${{ matrix.output_name }}
+          files: release-assets/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
