@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-from PyQt6.QtCore import QPoint, Qt, QRect, pyqtSignal
+from PyQt6.QtCore import QPoint, QPointF, Qt, QRect, QRectF, pyqtSignal
 from PyQt6.QtGui import QColor, QPainter, QPen
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QToolTip, QVBoxLayout, QWidget
 
@@ -139,13 +139,15 @@ class ColumnBarChartWidget(QWidget):
 class HeatmapWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._year = date.today().year
+        self._end_day = date.today()
+        self._start_day = self._end_day - timedelta(days=365)
         self._counts: dict[str, int] = {}
         self.setMouseTracking(True)
         self.setMinimumHeight(108)
 
-    def set_data(self, year: int, counts: dict[str, int]) -> None:
-        self._year = int(year)
+    def set_data(self, start_day: date, end_day: date, counts: dict[str, int]) -> None:
+        self._start_day = min(start_day, end_day)
+        self._end_day = max(start_day, end_day)
         self._counts = dict(counts)
         self.update()
 
@@ -164,57 +166,63 @@ class HeatmapWidget(QWidget):
     def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
-        start = date(self._year, 1, 1)
-        end = date(self._year, 12, 31)
-        start = start - timedelta(days=start.weekday())
-        cell, gap = self._grid_metrics()
+        display_start, columns = self._display_range()
+        if columns <= 0:
+            return
+        cell, gap = self._grid_metrics(columns)
         rows = 7
-        total_w = 53 * cell + 52 * gap
         total_h = rows * cell + (rows - 1) * gap
-        origin_x = max(0, int((self.width() - total_w) / 2))
-        origin_y = max(0, int((self.height() - total_h) / 2))
+        origin_y = max(0.0, (self.height() - total_h) / 2.0)
         max_count = max(1, max(self._counts.values(), default=0))
-        day = start
-        while day <= end:
+        day = display_start
+        while day <= self._end_day:
+            if day < self._start_day:
+                day += timedelta(days=1)
+                continue
             key = day.isoformat()
             value = int(self._counts.get(key, 0))
-            week = int((day - start).days / 7)
+            week = int((day - display_start).days / 7)
             row = day.weekday()
-            x = origin_x + week * (cell + gap)
+            x = week * (cell + gap)
             y = origin_y + row * (cell + gap)
             level = 0 if value <= 0 else min(4, max(1, round((value / max_count) * 4)))
             colors = ["#ECE6DE", rgba(SUCCESS, 0.24), rgba(SUCCESS, 0.42), rgba(SUCCESS, 0.62), SUCCESS]
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QColor(colors[level]))
-            painter.drawRoundedRect(QRect(x, y, cell, cell), 2, 2)
+            painter.drawRoundedRect(QRectF(x, y, cell, cell), 2, 2)
             day += timedelta(days=1)
 
     def _hit_test(self, pos: QPoint) -> tuple[str, int] | None:
-        start = date(self._year, 1, 1)
-        end = date(self._year, 12, 31)
-        start = start - timedelta(days=start.weekday())
-        cell, gap = self._grid_metrics()
+        display_start, columns = self._display_range()
+        if columns <= 0:
+            return None
+        cell, gap = self._grid_metrics(columns)
         rows = 7
-        total_w = 53 * cell + 52 * gap
         total_h = rows * cell + (rows - 1) * gap
-        origin_x = max(0, int((self.width() - total_w) / 2))
-        origin_y = max(0, int((self.height() - total_h) / 2))
-        day = start
-        while day <= end:
-            week = int((day - start).days / 7)
+        origin_y = max(0.0, (self.height() - total_h) / 2.0)
+        point = QPointF(pos)
+        day = display_start
+        while day <= self._end_day:
+            if day < self._start_day:
+                day += timedelta(days=1)
+                continue
+            week = int((day - display_start).days / 7)
             row = day.weekday()
-            rect = QRect(origin_x + week * (cell + gap), origin_y + row * (cell + gap), cell, cell)
-            if rect.contains(pos):
+            rect = QRectF(week * (cell + gap), origin_y + row * (cell + gap), cell, cell)
+            if rect.contains(point):
                 key = day.isoformat()
                 return key, int(self._counts.get(key, 0))
             day += timedelta(days=1)
         return None
 
-    def _grid_metrics(self) -> tuple[int, int]:
-        columns = 53
-        gap = 1
-        available = max(240, self.width() - ((columns - 1) * gap))
-        cell = max(4, min(8, int(available / columns)))
+    def _display_range(self) -> tuple[date, int]:
+        display_start = self._start_day - timedelta(days=self._start_day.weekday())
+        columns = ((self._end_day - display_start).days // 7) + 1
+        return display_start, max(1, columns)
+
+    def _grid_metrics(self, columns: int) -> tuple[float, float]:
+        gap = 1.0 if self.width() > columns * 2 else 0.0
+        cell = (max(1.0, float(self.width())) - ((columns - 1) * gap)) / max(1, columns)
         return cell, gap
 
 

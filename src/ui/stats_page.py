@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
+from calendar import monthrange
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QAbstractScrollArea, QHBoxLayout, QScrollArea, QStackedWidget, QVBoxLayout, QWidget
@@ -221,11 +222,11 @@ class StatsPage(QWidget):
     def _refresh_year(self) -> None:
         counts = self._sessions.counts_by_day()
         filtered: dict[str, int] = {}
-        prefix = f"{self._selected_year:04d}-"
+        start_day, end_day = self._year_period()
         for k, v in counts.items():
-            if k.startswith(prefix):
+            if start_day.isoformat() <= k <= end_day.isoformat():
                 filtered[k] = int(v)
-        self.year_view.set_data(self._selected_year, filtered, self._selected_year < self._today.year)
+        self.year_view.set_data(start_day, end_day, filtered, end_day < self._today)
 
     def _go_prev_day(self) -> None:
         self._selected_date -= timedelta(days=1)
@@ -286,3 +287,14 @@ class StatsPage(QWidget):
             if focus_type and focus_type not in colors:
                 colors[focus_type] = "#4F46E5"
         return colors
+
+    def _year_period(self) -> tuple[date, date]:
+        end_day = self._same_month_day(self._selected_year, self._today)
+        if end_day > self._today:
+            end_day = self._today
+        start_day = self._same_month_day(end_day.year - 1, end_day)
+        return start_day, end_day
+
+    def _same_month_day(self, target_year: int, source_day: date) -> date:
+        last_day = monthrange(target_year, source_day.month)[1]
+        return date(target_year, source_day.month, min(source_day.day, last_day))

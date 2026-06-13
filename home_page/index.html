@@ -9,9 +9,9 @@
     <meta property="og:title" content="番茄专注 · TomatoClock" />
     <meta property="og:description" content="基于 PyQt6 的跨平台桌面专注系统：番茄计时、统计（日历/年度）、设置与状态栏/托盘倒计时，支持 Windows / macOS / Linux（以 Releases 构建为准）。" />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" />
-    <link rel="icon" href="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" />
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" />
+    <meta property="og:image" content="/tomato-clock-pyqt6/assets/app-icon.png" />
+    <link rel="icon" href="/tomato-clock-pyqt6/assets/app-icon.png" />
+    <link rel="apple-touch-icon" href="/tomato-clock-pyqt6/assets/app-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -39,7 +39,7 @@
       .brand span{display:block;font-size:12px;color:var(--mut)}
       .actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
       .i{width:18px;height:18px;flex:0 0 auto}.i.stroke{fill:none;stroke:currentColor;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}.i.fill{fill:currentColor}
-      .btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:12px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-weight:800;letter-spacing:.1px;transition:transform 220ms var(--ease),background 220ms var(--ease),border-color 220ms var(--ease),filter 220ms var(--ease)}
+      .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:12px 16px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);font-weight:800;letter-spacing:.1px;white-space:nowrap;transition:transform 220ms var(--ease),background 220ms var(--ease),border-color 220ms var(--ease),filter 220ms var(--ease)}
       .btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.22);filter:saturate(1.1)}
       .btn:active{transform:translateY(0) scale(.985)}
       .btn.primary{background:linear-gradient(180deg,rgba(59,130,246,.34),rgba(59,130,246,.12));border-color:rgba(59,130,246,.44)}
@@ -94,6 +94,7 @@
       .download h2{margin:0;font-size:20px}.download p{margin-top:6px;color:var(--mut);max-width:76ch}
       footer{padding:28px 0 34px;border-top:1px solid rgba(255,255,255,.10);color:var(--mut);font-size:13px}
       .foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+      @media (max-width:640px){.download .ctas,.foot .actions{width:100%}.download .ctas .btn,.foot .actions .btn{flex:1 1 100%;width:100%}}
       @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}.b1,.b2,.b3{animation:none}.btn,.card,.shotRow{transition:none}}
     </style>
   </head>
@@ -104,7 +105,7 @@
       <div class="container">
         <div class="nav" aria-label="顶部导航">
           <a class="brand" href="./" aria-label="番茄专注 首页">
-            <img src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/src/assets/app-icon.png" alt="番茄专注 应用图标" width="44" height="44" />
+            <img src="/tomato-clock-pyqt6/assets/app-icon.png" alt="番茄专注 应用图标" width="44" height="44" />
             <div><strong>番茄专注</strong><span>TomatoClock · PyQt6 · 桌面专注系统</span></div>
           </a>
           <div class="actions">
@@ -170,26 +171,38 @@
 
       <section>
         <div class="container">
-          <div class="secHead"><h2>关键界面（用于理解，不占主角）</h2><p>每张截图只限制宽度、保持原始宽高比自适应高度；不提供点击放大；统一结构：左图右文，保持样式一致。</p></div>
+          <div class="secHead"><h2>关键界面（用于理解，不占主角）</h2><p>补齐专注、统计（日 / 周 / 月 / 年）、模板、设置与托盘等关键界面；每张截图都保持左图右文，只解释这张图在专注流程里承担什么角色。</p></div>
           <div class="shotList">
             <div class="shotRow" style="--acc:rgba(59,130,246,.70)">
-              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/focus_tab.png" alt="专注页面截图" loading="lazy" />
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/focus_tab.png" alt="专注页面截图" loading="lazy" />
               <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Focus</span></div><h3>专注</h3><p>把“下一步做什么”放在最醒目处：计时、状态、切换动作形成一条线，不让你在界面里找路径。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8" /><path d="M12 8v8" /></svg><span>开始动作更明确，减少犹豫。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l2.5 2.5" /></svg><span>状态信息集中呈现，减少扫视成本。</span></span></div></div>
             </div>
             <div class="shotRow" style="--acc:rgba(168,85,247,.70)">
-              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/statistics_tab.png" alt="统计页面截图" loading="lazy" />
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/statistics_tab_day.png" alt="统计页面截图" loading="lazy" />
               <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Stats</span></div><h3>统计</h3><p>用一眼能读懂的结构呈现趋势：你不是在“看图”，而是在确认自己是否在正确的节奏里。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5" /><path d="M4 19h16" /></svg><span>重点优先：先趋势，后细节。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10" /><path d="M7 12h10" /><path d="M7 17h10" /></svg><span>信息分组清晰，减少视觉噪音。</span></span></div></div>
             </div>
+            <div class="shotRow" style="--acc:rgba(236,72,153,.70)">
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/statistics_tab_week.png" alt="周统计页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Week</span></div><h3>周统计</h3><p>周视角适合校准最近一段时间的工作节奏：既能看出连续性，也能及时发现哪几天开始偏离计划。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M7 3v4" /><path d="M17 3v4" /></svg><span>更适合做短周期复盘与节奏校正。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="M5 17h9" /></svg><span>把连续投入和波动都放到同一页里。</span></span></div></div>
+            </div>
+            <div class="shotRow" style="--acc:rgba(250,204,21,.70)">
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/statistics_tab_month.png" alt="月统计页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Month</span></div><h3>月统计</h3><p>月度页面更适合判断策略是否有效：不是看单日发挥，而是看一个阶段内的累计投入有没有形成稳定结果。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v3" /><path d="M16 3v3" /><path d="M4 8h16" /></svg><span>适合看阶段性目标是否在按预期推进。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 18l4-5 3 2 5-7" /></svg><span>把零散专注记录整合成可判断的趋势。</span></span></div></div>
+            </div>
             <div class="shotRow" style="--acc:rgba(34,197,94,.70)">
-              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/statistics_tab_year.png" alt="年度统计页面截图" loading="lazy" />
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/statistics_tab_year.png" alt="年度统计页面截图" loading="lazy" />
               <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Year</span></div><h3>年度</h3><p>把“我到底有没有坚持”变成可回答的问题：年度视角更适合看阶段性成果与季节性波动。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18" /><path d="M12 3v18" /></svg><span>更长周期更接近真实节奏。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v2" /><path d="M12 20v2" /></svg><span>让复盘从“感觉”变成“依据”。</span></span></div></div>
             </div>
+            <div class="shotRow" style="--acc:rgba(99,102,241,.70)">
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/template_tab.png" alt="模板页面截图" loading="lazy" />
+              <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Template</span></div><h3>模板</h3><p>把常用专注配置提前整理成模板，减少每次开始前的重复设定；尤其适合不同任务类型之间快速切换。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z" /><path d="M9 9h6" /></svg><span>常用方案可复用，避免反复配置。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12h8" /><path d="M12 8v8" /></svg><span>让切换任务类型时仍然保持低摩擦。</span></span></div></div>
+            </div>
             <div class="shotRow" style="--acc:rgba(234,88,12,.70)">
-              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/settings_tab.png" alt="设置页面截图" loading="lazy" />
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/settings_tab.png" alt="设置页面截图" loading="lazy" />
               <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Settings</span></div><h3>设置</h3><p>设置不是“配置中心”，而是为了让你更少维护：把会影响体验的选项放在合理的位置，避免打断主流程。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16" /><path d="M12 4v16" /></svg><span>重要项优先：少而清晰。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11h6" /><path d="M10 15h4" /></svg><span>一致的控件节奏与反馈。</span></span></div></div>
             </div>
             <div class="shotRow" style="--acc:rgba(14,165,233,.70)">
-              <img class="shotImg" src="https://raw.githubusercontent.com/SublimeCT/tomato-clock-pyqt6/main/docs/tray_panel.png" alt="状态栏/托盘倒计时截图" loading="lazy" />
+              <img class="shotImg" src="/tomato-clock-pyqt6/screens/tray_panel.png" alt="状态栏/托盘倒计时截图" loading="lazy" />
               <div class="shotText"><div class="kicker"><span class="kdot"></span><span>Tray</span></div><h3>状态栏 / 托盘</h3><p>把进度放在“视线边缘”：你专注在工作时，不需要回到应用里确认倒计时。</p><div class="mini"><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 12h12" /><path d="M12 6v12" /></svg><span>更少切换，更少中断。</span></span><span><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8v4l2.5 2.5" /></svg><span>进度可见但不侵占注意力。</span></span></div></div>
             </div>
           </div>
@@ -201,7 +214,7 @@
           <div class="download" aria-label="下载区块">
             <div><h2>下载与安装</h2><p>下载固定使用 GitHub Releases：选择最新版本，根据 Windows / macOS / Linux 选择对应构建产物（以 Releases 列表为准）。</p></div>
             <div class="ctas">
-              <a class="btn cta" href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases" target="_blank" rel="noreferrer"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10" /><path d="M8 10l4 4 4-4" /><path d="M4 21h16" /></svg>打开 Releases</a>
+              <a class="btn cta" href="https://github.com/SublimeCT/tomato-clock-pyqt6/releases" target="_blank" rel="noreferrer"><svg class="i stroke" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v10" /><path d="M8 10l4 4 4-4" /><path d="M4 21h16" /></svg>下载</a>
               <a class="btn primary" href="https://github.com/SublimeCT/tomato-clock-pyqt6" target="_blank" rel="noreferrer"><svg class="i fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.4c.58.1.8-.25.8-.56v-2c-3.26.72-3.95-1.4-3.95-1.4-.54-1.36-1.32-1.72-1.32-1.72-1.08-.73.08-.72.08-.72 1.2.08 1.83 1.24 1.83 1.24 1.06 1.82 2.78 1.3 3.46 1 .1-.77.42-1.3.76-1.6-2.6-.3-5.33-1.3-5.33-5.82 0-1.29.46-2.34 1.22-3.17-.12-.3-.53-1.52.12-3.16 0 0 1-.32 3.3 1.21a11.4 11.4 0 0 1 6 0C17.74 4.4 18.74 4.72 18.74 4.72c.65 1.64.24 2.86.12 3.16.76.83 1.22 1.88 1.22 3.17 0 4.53-2.74 5.51-5.35 5.8.44.38.82 1.13.82 2.28v3.37c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>查看仓库</a>
             </div>
           </div>

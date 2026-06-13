@@ -19,8 +19,11 @@
 | 页面 | 截图 | 说明 |
 |--- |--- |--- |
 | 专注 | `MacOS`: ![](./docs/focus_tab.png) `Ubuntu`: ![](./docs/focus_tab_ubuntu.png) `Windows`: ![](./docs/focus_tab_windows.png) | |
-| 统计 | ![](./docs/statistics_tab.png) | |
+| 统计(日) | ![](./docs/statistics_tab_day.png) | |
+| 统计(周) | ![](./docs/statistics_tab_week.png) | |
+| 统计(月) | ![](./docs/statistics_tab_month.png) | |
 | 统计(年) | ![](./docs/statistics_tab_year.png) | |
+| 模板 | ![](./docs/template_tab.png) | |
 | 设置 | ![](./docs/settings_tab.png) | |
 | 管理专注类型 | ![](./docs/focus_type_management.png) | |
 | 状态栏(MacOS 倒计时) | ![](./docs/tray_panel.png) | |

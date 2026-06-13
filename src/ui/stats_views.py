@@ -176,10 +176,10 @@ class YearStatsPanel(_NavPanel):
         self.body_layout.addWidget(self.heatmap, 0)
         self.body_layout.addWidget(legend_row, 0)
 
-    def set_data(self, year: int, counts: dict[str, int], can_go_next: bool) -> None:
-        self.range_label.setText(f"{year}年")
+    def set_data(self, start_day: date, end_day: date, counts: dict[str, int], can_go_next: bool) -> None:
+        self.range_label.setText(f"{start_day.year}年{start_day.month}月{start_day.day}日 - {end_day.year}年{end_day.month}月{end_day.day}日")
         self.next_btn.setEnabled(bool(can_go_next))
-        self.heatmap.set_data(year, counts)
+        self.heatmap.set_data(start_day, end_day, counts)
 
 
 @dataclass(frozen=True)

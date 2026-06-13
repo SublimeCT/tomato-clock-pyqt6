@@ -35,8 +35,11 @@ jobs:
           mkdir -p home_page/assets home_page/screens
           cp -f src/assets/app-icon.png home_page/assets/app-icon.png
           cp -f docs/focus_tab.png home_page/screens/focus_tab.png
-          cp -f docs/statistics_tab.png home_page/screens/statistics_tab.png
+          cp -f docs/statistics_tab_day.png home_page/screens/statistics_tab_day.png
+          cp -f docs/statistics_tab_week.png home_page/screens/statistics_tab_week.png
+          cp -f docs/statistics_tab_month.png home_page/screens/statistics_tab_month.png
           cp -f docs/statistics_tab_year.png home_page/screens/statistics_tab_year.png
+          cp -f docs/template_tab.png home_page/screens/template_tab.png
           cp -f docs/settings_tab.png home_page/screens/settings_tab.png
           cp -f docs/tray_panel.png home_page/screens/tray_panel.png
 
