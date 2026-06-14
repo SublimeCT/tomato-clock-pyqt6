@@ -14,9 +14,9 @@ from PyQt6.QtCore import (
 )
 from PyQt6.QtGui import QColor, QIcon, QLinearGradient, QPainter, QPainterPath, QPen, QRegion
 from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QStyle, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QSizePolicy, QStyle, QVBoxLayout, QWidget
 
-from src.ui.ui_theme import ACCENT, BG, BORDER, TEXT, apply_fixed_policy, rgba, type_colors
+from src.ui.ui_theme import ACCENT, BG, BORDER, TEXT, apply_fixed_policy, progress_button_qss, rgba, type_colors
 
 
 class TrayPopup(QWidget):
@@ -32,29 +32,31 @@ class TrayPopup(QWidget):
             | Qt.WindowType.WindowStaysOnTopHint
             | Qt.WindowType.Tool
         )
-        self.setFixedSize(320, 156)
+        self.setFixedSize(286, 164)
         self._accent = self._qcolor("#4F46E5")
         self._bg0 = self._qcolor(BG)
         self._bg1 = self._qcolor("#FFF8F3")
         self._corner_radius = 18
+        self._progress = 0.0
         self._anim: QPropertyAnimation | None = None
         self._hiding = False
         self._event_filter_installed = False
         self._update_mask()
 
         root = QVBoxLayout(self)
-        root.setContentsMargins(20, 16, 20, 16)
+        root.setContentsMargins(18, 14, 18, 14)
         root.setSpacing(10)
 
         self.time_label = QLabel("25:00", self)
         self.time_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        apply_fixed_policy(self.time_label, 48)
-        self.time_label.setStyleSheet(f"font-size: 44px; font-weight: 700; color: {TEXT};")
+        apply_fixed_policy(self.time_label, 56)
+        self.time_label.setStyleSheet(f"font-size: 52px; font-weight: 700; color: {TEXT};")
 
         self.type_pill = QLabel("默认专注", self)
         self.type_pill.setObjectName("FocusTypePill")
         self.type_pill.setAlignment(Qt.AlignmentFlag.AlignCenter)
         apply_fixed_policy(self.type_pill, 28)
+        self.type_pill.setSizePolicy(QSizePolicy.Policy.Maximum, QSizePolicy.Policy.Fixed)
 
         actions_row = QHBoxLayout()
         actions_row.setSpacing(8)
@@ -89,7 +91,7 @@ class TrayPopup(QWidget):
         actions_row.addWidget(self.quit_button, 1)
 
         root.addWidget(self.time_label)
-        root.addWidget(self.type_pill)
+        root.addWidget(self.type_pill, 0, Qt.AlignmentFlag.AlignHCenter)
         root.addLayout(actions_row)
         root.addStretch(1)
         self._apply_theme()
@@ -104,6 +106,10 @@ class TrayPopup(QWidget):
             if c.isValid():
                 self._accent = QColor(c)
                 self._apply_theme()
+
+    def set_progress(self, progress: float) -> None:
+        self._progress = max(0.0, min(1.0, float(progress)))
+        self._apply_theme()
 
     def set_running(self, running: bool) -> None:
         self.toggle_button.setText("暂停" if running else "开始")
@@ -201,18 +207,11 @@ class TrayPopup(QWidget):
             "  font-size: 13px;"
             "  font-weight: 600;"
             "}"
-            "QPushButton#ActionButton {"
-            f"  background-color: {btn_bg};"
-            "  color: white;"
-            f"  border: 1px solid {btn_bg};"
-            "  border-radius: 8px;"
-            "  padding: 7px 10px;"
-            "  font-size: 13px;"
-            "  font-weight: 600;"
-            "}"
+            "QPushButton#ActionButton { color: white; border-radius: 8px; padding: 7px 10px; font-size: 13px; font-weight: 600; }"
             f"QPushButton#ActionButton:hover {{ background-color: {btn_bg_hover}; }}"
             "QPushButton#ActionButton:pressed { background-color: #C1272D; }"
         )
+        self.toggle_button.setStyleSheet(progress_button_qss(btn_bg, self._progress))
         if hasattr(self, "open_main_button"):
             self.open_main_button.setStyleSheet(
                 f"QPushButton#ActionButton {{ background: white; color: {TEXT}; border: 1px solid {BORDER}; border-radius: 8px; padding: 0; }}"

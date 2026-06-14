@@ -30,6 +30,21 @@ def rgba(color_hex: str, alpha: float) -> str:
     return f"rgba({color.red()},{color.green()},{color.blue()},{color.alpha()})"
 
 
+def progress_button_qss(color_hex: str, progress: float, radius: int = 10) -> str:
+    """Return a right-to-left fading background used by the tray progress button."""
+    progress = max(0.0, min(1.0, float(progress)))
+    cutoff = max(0.0, min(1.0, 1.0 - progress))
+    solid, faded = rgba(color_hex, 1.0), rgba(color_hex, 0.32)
+    background = solid if cutoff >= 1.0 else faded if cutoff <= 0.0 else (
+        "qlineargradient(x1:0, y1:0, x2:1, y2:0,"
+        f" stop:0 {solid}, stop:{cutoff:.4f} {solid}, stop:{min(1.0, cutoff + 0.001):.4f} {faded}, stop:1 {faded})"
+    )
+    return (
+        f"QPushButton {{ background: {background}; color: white; border: 1px solid {color_hex};"
+        f" border-radius: {int(radius)}px; padding: 7px 10px; font-size: 13px; font-weight: 700; }}"
+    )
+
+
 def apply_fixed_policy(widget: QWidget, height: int | None = None) -> None:
     """Apply the Fixed vertical policy required by this project."""
     widget.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)

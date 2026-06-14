@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QApplication, QSystemTrayIcon
 
 from src.core.pomodoro_engine import EngineState, PhaseFinishedEvent, PomodoroEngine
 from src.core.settings_store import SettingsStore
+from src.tray.popup_state import build_tray_popup_state
 from src.ui.main_window import MainWindow
 from src.ui.tray_popup import TrayPopup
 from src.utils.system_notification_fallback import show_linux_notification
@@ -138,9 +139,10 @@ class TrayController:
         if state.focus_type != self._last_focus_type:
             self._last_focus_type = state.focus_type
             self._focus_type_colors = self._settings.focus_type_colors()
-        focus_color = self._focus_type_colors.get(state.focus_type, "#4F46E5")
+        popup_state = build_tray_popup_state(self._settings, state, self._focus_type_colors)
         self._popup.set_time_text(state.time_str)
-        self._popup.set_focus_type_text(state.focus_type, color_hex=focus_color)
+        self._popup.set_focus_type_text(popup_state.label, color_hex=popup_state.color_hex)
+        self._popup.set_progress(popup_state.progress)
         self._popup.set_running(state.running)
 
         if self._use_macos_status_item and self._mac_item is not None:

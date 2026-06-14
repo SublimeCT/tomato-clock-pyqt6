@@ -152,6 +152,15 @@ class PomodoroEngine(QObject):
         self._focus_started_at = None
         self._emit_state()
 
+    def reset_for_launch(self) -> None:
+        self._timer.stop()
+        self._running = False
+        self._phase = "focus"
+        self._duration = QTime(0, self._focus_minutes(), 0)
+        self._focus_started_at = None
+        self._completed_focus_count = 0
+        self._emit_state()
+
     def _tick(self) -> None:
         if self._duration <= QTime(0, 0, 0):
             self._on_phase_finished()

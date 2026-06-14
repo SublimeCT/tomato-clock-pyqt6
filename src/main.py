@@ -44,6 +44,7 @@ if __name__ == "__main__":
     engine = PomodoroEngine(settings=settings, sessions=sessions)
     window = MainWindow(engine=engine, settings=settings, sessions=sessions)
     controller = TrayController(engine=engine, settings=settings, main_window=window, app_icon=app_icon)
+    engine.reset_for_launch()
     update_checker = AppUpdateChecker(
         current_version=app_metadata.version,
         repository_url=app_metadata.repository_url,
