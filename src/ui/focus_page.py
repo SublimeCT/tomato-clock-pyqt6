@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import QAbstractScrollArea, QHBoxLayout, QLabel, QPushButto
 
 from src.core.pomodoro_engine import EngineState, PomodoroEngine
 from src.core.settings_store import SettingsStore
+from src.ui.update_notice import UpdateNoticeWidget
 from src.ui.focus_widgets import ChevronRow, SessionDotsWidget, TimerRingWidget
 from src.ui.ui_theme import ACCENT, ACCENT_HOVER, BORDER, MUTED, SUCCESS, TEXT, WARN, apply_fixed_policy, rgba
 
@@ -167,6 +168,7 @@ class FocusPage(QWidget):
         self._apply_action_styles(False, False)
         action_row.addWidget(self.start_pause_button, 1)
         action_row.addWidget(self.reset_button, 0)
+        self.update_notice = UpdateNoticeWidget(self)
 
         body_layout.addWidget(self.session_dots, 0, Qt.AlignmentFlag.AlignHCenter)
         body_layout.addWidget(self.timer_ring, 0, Qt.AlignmentFlag.AlignHCenter)
@@ -175,6 +177,7 @@ class FocusPage(QWidget):
         body_layout.addWidget(self.type_row)
         body_layout.addWidget(self.duration_row)
         body_layout.addLayout(action_row)
+        body_layout.addWidget(self.update_notice)
         body_layout.addStretch(1)
         root.addWidget(body, 1)
 
@@ -284,3 +287,6 @@ class FocusPage(QWidget):
             QStyle.StandardPixmap.SP_MediaPause if running else QStyle.StandardPixmap.SP_MediaPlay
         )
         self.start_pause_button.setIcon(icon)
+
+    def show_update_notice(self, latest_version: str, release_url: str) -> None:
+        self.update_notice.show_notice(latest_version, release_url)

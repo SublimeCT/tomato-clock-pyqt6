@@ -85,6 +85,9 @@ class MainWindow(QMainWindow):
         self.activateWindow()
         self.settings_page.focus_durations()
 
+    def show_update_notice(self, latest_version: str, release_url: str) -> None:
+        self.focus_page.show_update_notice(latest_version, release_url)
+
     def closeEvent(self, event: QCloseEvent) -> None:
         event.ignore()
         self.hide()

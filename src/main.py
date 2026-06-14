@@ -8,6 +8,7 @@ from src.app_metadata import get_app_metadata
 from src.core.pomodoro_engine import PomodoroEngine
 from src.core.session_store import SessionStore
 from src.core.settings_store import SettingsStore
+from src.core.update_checker import AppUpdateChecker
 from src.tray.tray_controller import TrayController
 from src.ui.main_window import MainWindow
 from src.utils.icon_loader import load_app_icon
@@ -43,5 +44,12 @@ if __name__ == "__main__":
     engine = PomodoroEngine(settings=settings, sessions=sessions)
     window = MainWindow(engine=engine, settings=settings, sessions=sessions)
     controller = TrayController(engine=engine, settings=settings, main_window=window, app_icon=app_icon)
+    update_checker = AppUpdateChecker(
+        current_version=app_metadata.version,
+        repository_url=app_metadata.repository_url,
+        parent=app,
+    )
+    update_checker.update_available.connect(window.show_update_notice)
+    update_checker.start()
 
     sys.exit(app.exec())
